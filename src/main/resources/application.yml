@@ -1,0 +1,19 @@
+management:
+  health:
+    redis:
+      enabled: false
+spring:
+  application:
+    name: spring-react-boilerplate
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # password: ${REDIS_PASSWORD:}
+      timeout: 2s
+app:
+  cache:
+    redis:
+      # Prefix prepended to every Redis cache key so this project's caches don't
+      # collide with other apps on a shared Redis. Defaults to the application name.
+      key-prefix: ${spring.application.name}
