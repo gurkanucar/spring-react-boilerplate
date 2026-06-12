@@ -1,20 +1,25 @@
 package com.gucardev.springreactboilerplate.infra.exception;
 
 import com.gucardev.springreactboilerplate.infra.exception.model.ExceptionType;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-@Getter
-@RequiredArgsConstructor
-public enum TenantExceptionType implements ExceptionType {
+/**
+ * Multi-tenancy / workspace-scoping business errors.
+ */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class TenantExceptionType {
 
-    NO_WORKSPACE_CONTEXT("error.tenant.no_workspace_context", HttpStatus.FORBIDDEN, "NO_WORKSPACE_CONTEXT"),
-    CROSS_WORKSPACE("error.tenant.cross_workspace", HttpStatus.NOT_FOUND, "CROSS_WORKSPACE"),
-    NO_ORGANIZATION_CONTEXT("error.tenant.no_organization_context", HttpStatus.FORBIDDEN, "NO_ORGANIZATION_CONTEXT"),
-    CROSS_ORGANIZATION("error.tenant.cross_organization", HttpStatus.NOT_FOUND, "CROSS_ORGANIZATION");
+    public static final ExceptionType NO_WORKSPACE_CONTEXT =
+            new ExceptionType("error.tenant.no_workspace_context", HttpStatus.FORBIDDEN, "NO_WORKSPACE_CONTEXT");
 
-    private final String key;
-    private final HttpStatus status;
-    private final String code;
+    public static final ExceptionType CROSS_WORKSPACE =
+            new ExceptionType("error.tenant.cross_workspace", HttpStatus.NOT_FOUND, "CROSS_WORKSPACE");
+
+    public static final ExceptionType NO_ORGANIZATION_CONTEXT =
+            new ExceptionType("error.tenant.no_organization_context", HttpStatus.FORBIDDEN, "NO_ORGANIZATION_CONTEXT");
+
+    public static final ExceptionType CROSS_ORGANIZATION =
+            new ExceptionType("error.tenant.cross_organization", HttpStatus.NOT_FOUND, "CROSS_ORGANIZATION");
 }

@@ -46,15 +46,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiError> handleBusiness(
             BusinessException ex, HttpServletRequest request) {
 
-        log.warn("[BUSINESS] code={} message={} path={}",
-                ex.getBusinessErrorCode(), ex.getMessage(), request.getRequestURI());
+        String message = MessageUtil.getMessage(ex.getMessageKey(), ex.getArgs());
+
+        log.warn("[BUSINESS] code={} key={} path={}",
+                ex.getCode(), ex.getMessageKey(), request.getRequestURI());
 
         return ResponseEntity
                 .status(ex.getStatus())
                 .body(ApiError.business(
                         ex.getStatus().value(),
-                        ex.getMessage(),
-                        ex.getBusinessErrorCode(),
+                        message,
+                        ex.getCode(),
                         getTraceId()));
     }
 

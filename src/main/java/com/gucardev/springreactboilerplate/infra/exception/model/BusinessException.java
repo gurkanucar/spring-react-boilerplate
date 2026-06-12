@@ -1,19 +1,35 @@
 package com.gucardev.springreactboilerplate.infra.exception.model;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Carries a business error as data: the {@link ExceptionType} it came from plus the message
+ * arguments. The HTTP status, machine code and i18n message key are derived from the type;
+ * the human-readable message is resolved at the HTTP boundary (GlobalExceptionHandler) using
+ * the request locale.
+ */
 @Getter
-@Setter
 public class BusinessException extends RuntimeException {
-    private final HttpStatus status;
-    private final String businessErrorCode;
 
-    public BusinessException(String message, HttpStatus status, String businessErrorCode) {
-        super(message);
-        this.status = status;
-        this.businessErrorCode = businessErrorCode;
+    private final transient ExceptionType type;
+    private final transient Object[] args;
+
+    public BusinessException(ExceptionType type, Object... args) {
+        super(type.key());
+        this.type = type;
+        this.args = args;
     }
 
+    public HttpStatus getStatus() {
+        return type.status();
+    }
+
+    public String getCode() {
+        return type.code();
+    }
+
+    public String getMessageKey() {
+        return type.key();
+    }
 }

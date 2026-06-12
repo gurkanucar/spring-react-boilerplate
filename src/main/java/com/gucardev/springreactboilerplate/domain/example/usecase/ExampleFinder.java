@@ -3,7 +3,6 @@ package com.gucardev.springreactboilerplate.domain.example.usecase;
 import com.gucardev.springreactboilerplate.domain.example.entity.Example;
 import com.gucardev.springreactboilerplate.domain.example.exception.ExampleExceptionType;
 import com.gucardev.springreactboilerplate.domain.example.repository.ExampleRepository;
-import com.gucardev.springreactboilerplate.infra.exception.ExceptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +18,6 @@ public class ExampleFinder {
 
     public Example findById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> ExceptionUtil.of(ExampleExceptionType.NOT_FOUND, id));
+                .orElseThrow(() -> ExampleExceptionType.NOT_FOUND.toException(id));
     }
 }

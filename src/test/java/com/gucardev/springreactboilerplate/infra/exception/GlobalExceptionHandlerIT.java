@@ -91,7 +91,7 @@ class GlobalExceptionHandlerIT extends BaseIntegrationTest {
 
         @GetMapping("/notfound")
         String notFound() {
-            throw ExceptionUtil.notFound("User", 5);
+            throw CommonExceptionType.NOT_FOUND.toException("User", 5);
         }
 
         @GetMapping("/runtime")
