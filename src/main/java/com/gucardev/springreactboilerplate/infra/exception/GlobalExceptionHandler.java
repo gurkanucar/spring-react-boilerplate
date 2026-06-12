@@ -58,19 +58,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         getTraceId()));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiError> handleRuntimeException(
-            RuntimeException ex, HttpServletRequest request) {
-
-        log.warn("[RUNTIME_EXCEPTION] path={} msg={}", request.getRequestURI(), ex.getMessage());
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiError.business(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        ex.getLocalizedMessage(),
-                        "RUNTIME_EXCEPTION", getTraceId()));
-    }
-
     // -------------------------------------------------------------------------
     // Validation
     // -------------------------------------------------------------------------
@@ -189,7 +176,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .matches(".*(unique|duplicate|uk_).*");
 
         return ResponseEntity
-                .status(isDuplicate ? HttpStatus.CONFLICT : HttpStatus.INTERNAL_SERVER_ERROR)
+                .status(isDuplicate ? HttpStatus.CONFLICT : HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ApiError.business(
                         isDuplicate ? 409 : 422,
                         MessageUtil.getMessage(isDuplicate ? "error.duplicate_resource" : "error.data_integrity"),

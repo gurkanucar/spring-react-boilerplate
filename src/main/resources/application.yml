@@ -14,6 +14,17 @@ spring:
   #      hibernate:
   #        format_sql: true
 
+  # ==================== JSON (JACKSON 3) ====================
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+    datatype:
+      datetime:
+        write-dates-as-timestamps: false
+
   # ==================== SERVLET & MULTIPART CONFIG ====================
   servlet:
     multipart:

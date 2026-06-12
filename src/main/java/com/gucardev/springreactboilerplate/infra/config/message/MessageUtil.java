@@ -14,10 +14,17 @@ public class MessageUtil {
     }
 
     public static String getMessage(String key, Object[] args) {
+        if (messageSource == null) {
+            return key;
+        }
         try {
             return messageSource.getMessage(key, args, LocaleContextHolder.getLocale());
         } catch (Exception e) {
-            return messageSource.getMessage("messages.fallback", null, LocaleContextHolder.getLocale());
+            try {
+                return messageSource.getMessage("messages.fallback", null, LocaleContextHolder.getLocale());
+            } catch (Exception ignored) {
+                return key;
+            }
         }
     }
 
