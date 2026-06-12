@@ -17,10 +17,10 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * demand (any cache name from {@link CacheNames}) with its own fixed {@code entryTtl}.
  *
  * <p>Keys are serialized as plain strings and values as JSON (Jackson 3 /
- * {@link GenericJacksonJsonRedisSerializer}). Every key is prefixed with the project name
- * (configurable via {@code app.cache.redis.key-prefix}, defaulting to
- * {@code spring.application.name}) so caches don't collide with other applications sharing
- * the same Redis instance — e.g. {@code spring-react-boilerplate::users::123}.
+ * {@link GenericJacksonJsonRedisSerializer}). Every key is prefixed with the shared
+ * {@code app.redis.key-prefix} (the same namespace used for all Redis keys, e.g. OTP) so
+ * caches don't collide with other applications on a shared Redis — set it to e.g.
+ * {@code "myapp:"} to get keys like {@code myapp:users::123}. Empty by default.
  *
  * <p>Managers build lazily, so the application starts even when Redis is unreachable;
  * connection happens on first use.
@@ -28,7 +28,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisCacheConfig {
 
-    @Value("${app.cache.redis.key-prefix:${spring.application.name}}")
+    /**
+     * Shared Redis namespace (cache + OTP/etc.). Convention: include your own trailing
+     * separator, e.g. {@code "myapp:"}. The cache name + "::" is appended automatically,
+     * so {@code "myapp:"} yields {@code myapp:users::<key>}.
+     */
+    @Value("${app.redis.key-prefix:}")
     private String keyPrefix;
 
     @Bean(CacheManagers.REDIS_30S)
@@ -70,7 +75,7 @@ public class RedisCacheConfig {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttl)
                 .disableCachingNullValues()
-                .prefixCacheNameWith(keyPrefix + "::")
+                .prefixCacheNameWith(keyPrefix)
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair

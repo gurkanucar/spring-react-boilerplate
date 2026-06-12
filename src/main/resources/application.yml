@@ -1,19 +1,120 @@
-management:
-  health:
-    redis:
-      enabled: false
+# ==================== APPLICATION CONFIGURATION ====================
+server:
+  shutdown: graceful
+
 spring:
   application:
     name: spring-react-boilerplate
+  profiles:
+    active: dev
+  jpa:
+    open-in-view: false
+  #    show-sql: true
+  #    properties:
+  #      hibernate:
+  #        format_sql: true
+
+  # ==================== SERVLET & MULTIPART CONFIG ====================
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      # password: ${REDIS_PASSWORD:}
-      timeout: 2s
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      # Fail fast on a dead/idle connection instead of hanging ~20s on the OS TCP timeout.
+      timeout: 4s
+      connect-timeout: 5s
+      lettuce:
+        shutdown-timeout: 200ms
+
+# ==================== APPLICATION CONFIG ====================
 app:
-  cache:
+  redis:
+    key-prefix: ${REDIS_KEY_PREFIX:}
+
+# ==================== COMMON ACTUATOR CONFIG ====================
+management:
+  server:
+    port: 8081
+  health:
     redis:
-      # Prefix prepended to every Redis cache key so this project's caches don't
-      # collide with other apps on a shared Redis. Defaults to the application name.
-      key-prefix: ${spring.application.name}
+      # Disabled so the app stays UP when Redis is down (caches connect lazily on first use).
+      enabled: false
+  endpoint:
+    health:
+      show-details: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics"
+  tracing:
+    sampling:
+      probability: '1.0'
+
+# ==================== SECURITY CONFIGURATION ====================
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}
+    token-validity-in-minutes: 800
+    refresh-token-validity-in-minutes: 2400
+    refresh-token-cleanup-cron: "0 0 * * * *"
+  ignored-paths: >
+    /swagger-resources/**,
+    /swagger-ui.html/**,
+    /swagger-ui/**,
+    /v3/api-docs/**,
+    /auth/**,
+    /public/**,
+    /api/v1/public/**,
+    /ws/**,
+    /timezone,
+    /time,
+    /healthcheck,
+    /log-level,
+    /actuator/**,
+    /sw.js,
+    /hello,
+    /whoami
+
+# ==================== LOGBOOK CONFIGURATION ====================
+logbook:
+  filter:
+    enabled: true
+  secure-filter:
+    enabled: false
+  format:
+    style: http
+  strategy: body-only-if-status-at-least
+  obfuscate:
+    headers: Authorization,X-API-Key
+    parameters: password,accessToken
+    json-body-fields: password,secret,refreshToken,accessToken
+    replacement: XXX
+  predicate:
+    exclude:
+      - path: /swagger-ui/**
+      - path: /swagger-resources/**
+      - path: /v3/api-docs/**
+      - path: /actuator/health
+      - path: /actuator/info
+      - path: /sw.js
+  write:
+    max-body-size: 10000
+  minimum-status: 200
+
+# ==================== LOGGING LEVELS ====================
+logging:
+  level:
+    org.zalando.logbook: TRACE
+    #    org.hibernate.orm.jdbc.bind: TRACE

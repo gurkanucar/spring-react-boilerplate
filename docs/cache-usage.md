@@ -68,8 +68,8 @@ annotations and pass the name + manager via constants.
 
 ```java
 import org.springframework.cache.annotation.Cacheable;
-import cache.com.gucardev.springreactboilerplate.infra.config.CacheNames;
-import cache.com.gucardev.springreactboilerplate.infra.config.CacheManagers;
+import com.gucardev.springreactboilerplate.infra.config.cache.CacheNames;
+import com.gucardev.springreactboilerplate.infra.config.cache.CacheManagers;
 
 @Service
 public class UserService {
@@ -148,15 +148,18 @@ public class ManualCacheExample {
 
 - **Cache key**: defaults to the method arguments. Override with SpEL: `key = "#id"` or
   `key = "#user.id"`. Prefer an explicit `key` when there are multiple args.
-- **Redis key prefix**: every Redis key is prefixed with the project name so it won't
-  collide with other apps on a shared Redis. Set via `app.cache.redis.key-prefix`
-  (defaults to `spring.application.name`).
+- **Redis key prefix**: every Redis key is prefixed with the shared `app.redis.key-prefix`
+  namespace (the same one used for all Redis keys, e.g. OTP) so it won't collide with other
+  apps on a shared Redis. Empty by default; set it (include a trailing separator, e.g.
+  `myapp:`) via `app.redis.key-prefix` / the `REDIS_KEY_PREFIX` env var.
 
-Example stored Redis key for `findById(123)` under `REDIS_10M`:
+Example stored Redis key for `findById(123)` under `REDIS_10M` with `app.redis.key-prefix=myapp:`:
 
 ```
-spring-react-boilerplate::users::123
+myapp:users::123
 ```
+
+With an empty prefix (the default) the key is simply `users::123`.
 
 Caffeine is in-memory and per-instance, so it needs no prefix.
 
@@ -176,11 +179,11 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      timeout: 2s
+      timeout: 4s
 app:
-  cache:
-    redis:
-      key-prefix: ${spring.application.name}
+  redis:
+    # Shared prefix for ALL Redis keys (cache + OTP/etc.). Empty by default.
+    key-prefix: ${REDIS_KEY_PREFIX:}
 ```
 
 The Redis managers build lazily — the app starts even if Redis is down, and connects on

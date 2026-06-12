@@ -1,0 +1,35 @@
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+    hibernate:
+      # WARNING: `update` lets Hibernate mutate the prod schema at startup. Once you adopt a
+      # migration tool (Flyway/Liquibase), switch this to `validate` (or `none`) for safety.
+      ddl-auto: update
+
+logbook:
+  strategy: status-at-least
+  minimum-status: 400
+
+# ==================== OPENAPI / SWAGGER ====================
+# Override to false in application-prod.yml to disable docs in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# ==================== PROD ACTUATOR ====================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics"
+
+
+# ==================== LOGGING LEVELS ====================
+logging:
+  level:
+    org.hibernate.orm.jdbc.bind: INFO
