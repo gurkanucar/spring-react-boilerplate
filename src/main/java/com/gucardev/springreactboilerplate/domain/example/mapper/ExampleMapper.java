@@ -5,6 +5,7 @@ import com.gucardev.springreactboilerplate.domain.example.model.dto.ExampleRespo
 import com.gucardev.springreactboilerplate.domain.example.model.request.CreateExampleRequest;
 import com.gucardev.springreactboilerplate.domain.example.model.request.UpdateExampleRequest;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
@@ -14,7 +15,7 @@ import org.mapstruct.ReportingPolicy;
  * ignored (e.g. BaseDto's deletedAt/deletedBy, which have no entity counterpart), and null
  * request fields are skipped on update so partial updates don't wipe columns.
  */
-@Mapper(componentModel = "spring",
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ExampleMapper {
