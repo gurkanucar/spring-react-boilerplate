@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.config.cache;
+package com.gucardev.springreactboilerplate.infra.config.cache;
 
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.config.cache;
+package com.gucardev.springreactboilerplate.infra.config.cache;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;

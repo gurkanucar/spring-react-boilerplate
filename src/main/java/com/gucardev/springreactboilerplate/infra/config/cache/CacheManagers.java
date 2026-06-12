@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.config.cache;
+package com.gucardev.springreactboilerplate.infra.config.cache;
 
 /**
  * Bean names of the available cache managers. The manager you pick determines BOTH the

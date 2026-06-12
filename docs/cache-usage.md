@@ -68,8 +68,8 @@ annotations and pass the name + manager via constants.
 
 ```java
 import org.springframework.cache.annotation.Cacheable;
-import com.gucardev.springreactboilerplate.config.cache.CacheNames;
-import com.gucardev.springreactboilerplate.config.cache.CacheManagers;
+import cache.com.gucardev.springreactboilerplate.infra.config.CacheNames;
+import cache.com.gucardev.springreactboilerplate.infra.config.CacheManagers;
 
 @Service
 public class UserService {

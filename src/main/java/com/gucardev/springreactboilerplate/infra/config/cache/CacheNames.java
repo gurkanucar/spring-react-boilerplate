@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.config.cache;
+package com.gucardev.springreactboilerplate.infra.config.cache;
 
 /**
  * Logical cache names — <strong>names only, no TTL</strong>.

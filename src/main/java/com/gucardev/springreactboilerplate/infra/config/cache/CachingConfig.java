@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.config.cache;
+package com.gucardev.springreactboilerplate.infra.config.cache;
 
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
