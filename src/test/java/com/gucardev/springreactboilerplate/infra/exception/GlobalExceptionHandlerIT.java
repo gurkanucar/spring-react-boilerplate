@@ -3,6 +3,7 @@ package com.gucardev.springreactboilerplate.infra.exception;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gucardev.springreactboilerplate.BaseIntegrationTest;
+import com.gucardev.springreactboilerplate.domain.example.model.request.ExampleFilterRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
@@ -61,6 +62,17 @@ class GlobalExceptionHandlerIT extends BaseIntegrationTest {
     }
 
     @Test
+    void validationMessage_resolvesFromMessageBundle() {
+        // The @Pattern message {sort.direction.pattern.exception} must resolve from
+        // messages.properties (validator wired to the app MessageSource), not render literally.
+        client.get().uri("/public/__errtest/filter?sortDir=bad").header("Accept-Language", "en")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.validationErrors.sortDir").isEqualTo("Sort direction must be 'asc' or 'desc'.");
+    }
+
+    @Test
     void validation_returns400_withFieldErrors() {
         client.post().uri("/public/__errtest/validate")
                 .header("Accept-Language", "en")
@@ -85,6 +97,11 @@ class GlobalExceptionHandlerIT extends BaseIntegrationTest {
         @GetMapping("/runtime")
         String runtime() {
             throw new IllegalStateException("super secret internal detail");
+        }
+
+        @GetMapping("/filter")
+        String filter(@Valid ExampleFilterRequest filter) {
+            return "ok";
         }
 
         @PostMapping("/validate")
