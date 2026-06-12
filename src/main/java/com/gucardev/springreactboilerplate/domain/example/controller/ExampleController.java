@@ -4,11 +4,13 @@ import com.gucardev.springreactboilerplate.domain.example.model.dto.ExampleRespo
 import com.gucardev.springreactboilerplate.domain.example.model.request.CreateExampleRequest;
 import com.gucardev.springreactboilerplate.domain.example.model.request.ExampleFilterRequest;
 import com.gucardev.springreactboilerplate.domain.example.model.request.UpdateExampleRequest;
-import com.gucardev.springreactboilerplate.domain.example.usecase.CreateExampleUseCase;
-import com.gucardev.springreactboilerplate.domain.example.usecase.DeleteExampleUseCase;
-import com.gucardev.springreactboilerplate.domain.example.usecase.GetAllExamplesUseCase;
-import com.gucardev.springreactboilerplate.domain.example.usecase.GetExampleByIdUseCase;
-import com.gucardev.springreactboilerplate.domain.example.usecase.UpdateExampleUseCase;
+import com.gucardev.springreactboilerplate.domain.example.service.flow.DuplicateExampleFlow;
+import com.gucardev.springreactboilerplate.domain.example.service.usecase.ActivateExampleUseCase;
+import com.gucardev.springreactboilerplate.domain.example.service.usecase.CreateExampleUseCase;
+import com.gucardev.springreactboilerplate.domain.example.service.usecase.DeleteExampleUseCase;
+import com.gucardev.springreactboilerplate.domain.example.service.usecase.GetAllExamplesUseCase;
+import com.gucardev.springreactboilerplate.domain.example.service.usecase.GetExampleByIdUseCase;
+import com.gucardev.springreactboilerplate.domain.example.service.usecase.UpdateExampleUseCase;
 import com.gucardev.springreactboilerplate.infra.config.response.ApiResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,6 +44,8 @@ public class ExampleController {
     private final DeleteExampleUseCase deleteExampleUseCase;
     private final GetExampleByIdUseCase getExampleByIdUseCase;
     private final GetAllExamplesUseCase getAllExamplesUseCase;
+    private final ActivateExampleUseCase activateExampleUseCase;
+    private final DuplicateExampleFlow duplicateExampleFlow;
 
     @Operation(summary = "List examples (paged, sorted and filtered)")
     @GetMapping
@@ -81,5 +85,20 @@ public class ExampleController {
     public ResponseEntity<ApiResponseWrapper<Void>> delete(@PathVariable Long id) {
         deleteExampleUseCase.execute(id);
         return ResponseEntity.ok(ApiResponseWrapper.ok((Void) null, "Example deleted"));
+    }
+
+    @Operation(summary = "Activate an example (admin)")
+    @PostMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponseWrapper<ExampleResponseDto>> activate(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponseWrapper.ok(activateExampleUseCase.execute(id)));
+    }
+
+    @Operation(summary = "Duplicate an example into a new record (admin) — orchestration flow")
+    @PostMapping("/{id}/duplicate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponseWrapper<ExampleResponseDto>> duplicate(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseWrapper.created(duplicateExampleFlow.execute(id)));
     }
 }

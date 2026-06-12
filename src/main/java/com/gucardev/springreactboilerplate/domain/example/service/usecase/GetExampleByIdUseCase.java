@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.domain.example.usecase;
+package com.gucardev.springreactboilerplate.domain.example.service.usecase;
 
 import com.gucardev.springreactboilerplate.domain.example.mapper.ExampleMapper;
 import com.gucardev.springreactboilerplate.domain.example.model.dto.ExampleResponseDto;

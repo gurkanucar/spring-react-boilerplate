@@ -14,4 +14,7 @@ public final class ExampleExceptionType {
 
     public static final ExceptionType NOT_FOUND =
             new ExceptionType("error.example.not_found", HttpStatus.NOT_FOUND, "EXAMPLE_NOT_FOUND");
+
+    public static final ExceptionType ALREADY_ACTIVE =
+            new ExceptionType("error.example.already_active", HttpStatus.CONFLICT, "EXAMPLE_ALREADY_ACTIVE");
 }

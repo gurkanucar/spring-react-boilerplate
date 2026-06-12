@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.domain.example.usecase;
+package com.gucardev.springreactboilerplate.domain.example.service.usecase;
 
 import com.gucardev.springreactboilerplate.domain.example.entity.Example;
 import com.gucardev.springreactboilerplate.domain.example.exception.ExampleExceptionType;
@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * Shared lookup used by the read/update/delete use cases: returns the entity or throws a
- * domain {@code NOT_FOUND}. Keeps the "fetch or 404" logic in one place.
+ * Shared lookup used by the read/update/delete/activate use cases: returns the entity or
+ * throws a domain {@code NOT_FOUND}. Keeps the "fetch or 404" logic in one place.
  */
 @Service
 @RequiredArgsConstructor
