@@ -53,6 +53,9 @@ spring:
 app:
   redis:
     key-prefix: ${REDIS_KEY_PREFIX:}
+  cors:
+    # Comma-separated origins allowed by the SecurityConfig CORS policy (React/Vite dev servers).
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
 
 # ==================== COMMON ACTUATOR CONFIG ====================
 management:
