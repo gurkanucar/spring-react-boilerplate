@@ -20,8 +20,9 @@ import org.springframework.test.web.servlet.client.RestTestClient;
  * most importantly the Spring Security filter chain, which a MOCK {@code RestTestClient} does
  * not install. Extend this and inject endpoints via {@code @Import(MyController.class)}.
  *
- * <p>The {@code postJson}/{@code getJson} helpers send/receive JSON, assert the HTTP status and
- * return the parsed response body, so tests can focus on assertions rather than plumbing.
+ * <p>The {@code postJson}/{@code getJson}/{@code putJson}/{@code deleteJson} helpers send/receive
+ * JSON, attach an optional bearer token, assert the HTTP status and return the parsed response
+ * body, so tests can focus on assertions rather than plumbing.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
@@ -33,29 +34,59 @@ public abstract class BaseIntegrationTest {
     @Autowired
     protected RestTestClient client;
 
-    /** POSTs {@code payload} as JSON, asserts the status and returns the parsed response body. */
+    // ---- POST ----
+
     protected JsonNode postJson(String uri, Object payload, int expectedStatus) {
-        byte[] body = client.post().uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
+        return postJson(uri, payload, null, expectedStatus);
+    }
+
+    protected JsonNode postJson(String uri, Object payload, String bearerToken, int expectedStatus) {
+        return exchangeWithBody(client.post().uri(uri), payload, bearerToken, expectedStatus);
+    }
+
+    // ---- PUT ----
+
+    protected JsonNode putJson(String uri, Object payload, String bearerToken, int expectedStatus) {
+        return exchangeWithBody(client.put().uri(uri), payload, bearerToken, expectedStatus);
+    }
+
+    // ---- GET ----
+
+    protected JsonNode getJson(String uri, int expectedStatus) {
+        return getJson(uri, null, expectedStatus);
+    }
+
+    protected JsonNode getJson(String uri, String bearerToken, int expectedStatus) {
+        return exchangeNoBody(client.get().uri(uri), bearerToken, expectedStatus);
+    }
+
+    // ---- DELETE ----
+
+    protected JsonNode deleteJson(String uri, String bearerToken, int expectedStatus) {
+        return exchangeNoBody(client.delete().uri(uri), bearerToken, expectedStatus);
+    }
+
+    // ---- internals ----
+
+    private JsonNode exchangeWithBody(RestTestClient.RequestBodySpec spec, Object payload,
+                                      String bearerToken, int expectedStatus) {
+        spec = spec.contentType(MediaType.APPLICATION_JSON);
+        if (bearerToken != null) {
+            spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
+        }
+        byte[] body = spec.body(payload)
                 .exchange()
                 .expectStatus().isEqualTo(expectedStatus)
                 .expectBody().returnResult().getResponseBody();
         return readTree(body);
     }
 
-    /** GETs {@code uri}, asserts the status and returns the parsed response body. */
-    protected JsonNode getJson(String uri, int expectedStatus) {
-        return getJson(uri, null, expectedStatus);
-    }
-
-    /** GETs {@code uri} with an optional bearer token, asserts the status and returns the body. */
-    protected JsonNode getJson(String uri, String bearerToken, int expectedStatus) {
-        RestTestClient.RequestHeadersSpec<?> request = client.get().uri(uri);
+    private JsonNode exchangeNoBody(RestTestClient.RequestHeadersSpec<?> spec,
+                                    String bearerToken, int expectedStatus) {
         if (bearerToken != null) {
-            request = request.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
+            spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
         }
-        byte[] body = request
+        byte[] body = spec
                 .exchange()
                 .expectStatus().isEqualTo(expectedStatus)
                 .expectBody().returnResult().getResponseBody();

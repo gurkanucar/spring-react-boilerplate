@@ -1,4 +1,4 @@
-package com.gucardev.springreactboilerplate.domain.user.entity;
+package com.gucardev.springreactboilerplate.domain.role.entity;
 
 import com.gucardev.springreactboilerplate.domain.shared.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +20,8 @@ import lombok.experimental.SuperBuilder;
  * Security (see {@code UserPrincipal}), so {@code @PreAuthorize("hasRole('ADMIN')")} matches.
  */
 @Entity
-@Table(name = "roles")
+@Table(name = "roles",
+        uniqueConstraints = @UniqueConstraint(name = "uk_roles_name", columnNames = "name"))
 @Getter
 @Setter
 @SuperBuilder
@@ -31,7 +33,8 @@ public class Role extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    // Uniqueness (and its backing index, used by findByName/existsByName) declared at table level.
+    @Column(nullable = false, length = 50)
     private String name;
 
     @Column(length = 100)

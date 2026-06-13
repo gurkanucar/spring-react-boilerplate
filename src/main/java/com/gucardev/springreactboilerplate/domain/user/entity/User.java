@@ -1,5 +1,6 @@
 package com.gucardev.springreactboilerplate.domain.user.entity;
 
+import com.gucardev.springreactboilerplate.domain.role.entity.Role;
 import com.gucardev.springreactboilerplate.domain.shared.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -29,7 +31,9 @@ import org.hibernate.type.SqlTypes;
  * {@code isActive} is the account enabled/disabled switch enforced via {@code UserPrincipal}.
  */
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+        uniqueConstraints = @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
+        indexes = @Index(name = "idx_users_created_at", columnList = "created_at"))
 @Getter
 @Setter
 @SuperBuilder
@@ -44,7 +48,9 @@ public class User extends BaseEntity {
 
     private String password;
 
-    @Column(unique = true, nullable = false)
+    // Uniqueness declared at the table level (uk_users_email); that constraint also backs
+    // the index used by the email-based login/lookup queries.
+    @Column(nullable = false)
     private String email;
 
     private String name;

@@ -2,7 +2,7 @@ package com.gucardev.springreactboilerplate.infra.config.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.gucardev.springreactboilerplate.domain.user.entity.Role;
+import com.gucardev.springreactboilerplate.domain.role.entity.Role;
 import com.gucardev.springreactboilerplate.domain.user.entity.User;
 import java.util.Set;
 import java.util.UUID;

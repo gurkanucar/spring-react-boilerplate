@@ -27,7 +27,9 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Table(name = "refresh_tokens", indexes = {
         @Index(name = "idx_refresh_tokens_token", columnList = "token", unique = true),
-        @Index(name = "idx_refresh_tokens_user", columnList = "user_id")
+        @Index(name = "idx_refresh_tokens_user", columnList = "user_id"),
+        // Supports the cleanup job's range scan on expired tokens.
+        @Index(name = "idx_refresh_tokens_expires_at", columnList = "expires_at")
 })
 @Getter
 @Setter
@@ -40,7 +42,8 @@ public class RefreshToken extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 64)
+    // Uniqueness backed by idx_refresh_tokens_token (declared on @Table above).
+    @Column(nullable = false, length = 64)
     private String token;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

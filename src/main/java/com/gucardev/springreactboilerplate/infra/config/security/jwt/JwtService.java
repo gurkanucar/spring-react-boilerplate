@@ -1,6 +1,6 @@
 package com.gucardev.springreactboilerplate.infra.config.security.jwt;
 
-import com.gucardev.springreactboilerplate.domain.user.entity.Role;
+import com.gucardev.springreactboilerplate.domain.role.entity.Role;
 import com.gucardev.springreactboilerplate.domain.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

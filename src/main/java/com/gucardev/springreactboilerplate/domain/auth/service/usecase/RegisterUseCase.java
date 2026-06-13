@@ -4,9 +4,9 @@ import com.gucardev.springreactboilerplate.domain.auth.exception.AuthExceptionTy
 import com.gucardev.springreactboilerplate.domain.auth.model.dto.TokenResponseDto;
 import com.gucardev.springreactboilerplate.domain.auth.model.request.RegisterRequest;
 import com.gucardev.springreactboilerplate.domain.auth.service.AuthTokenService;
-import com.gucardev.springreactboilerplate.domain.user.entity.Role;
+import com.gucardev.springreactboilerplate.domain.role.entity.Role;
+import com.gucardev.springreactboilerplate.domain.role.repository.RoleRepository;
 import com.gucardev.springreactboilerplate.domain.user.entity.User;
-import com.gucardev.springreactboilerplate.domain.user.repository.RoleRepository;
 import com.gucardev.springreactboilerplate.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

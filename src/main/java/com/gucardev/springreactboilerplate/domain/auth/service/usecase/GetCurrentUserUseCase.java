@@ -29,6 +29,6 @@ public class GetCurrentUserUseCase {
         }
         return userRepository.findByEmail(authentication.getName())
                 .map(userMapper::toDto)
-                .orElseThrow(() -> AuthExceptionType.USER_NOT_FOUND.toException());
+                .orElseThrow(AuthExceptionType.USER_NOT_FOUND::toException);
     }
 }

@@ -1,8 +1,8 @@
 package com.gucardev.springreactboilerplate.infra.seed;
 
-import com.gucardev.springreactboilerplate.domain.user.entity.Role;
+import com.gucardev.springreactboilerplate.domain.role.entity.Role;
+import com.gucardev.springreactboilerplate.domain.role.repository.RoleRepository;
 import com.gucardev.springreactboilerplate.domain.user.entity.User;
-import com.gucardev.springreactboilerplate.domain.user.repository.RoleRepository;
 import com.gucardev.springreactboilerplate.domain.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import java.util.HashSet;

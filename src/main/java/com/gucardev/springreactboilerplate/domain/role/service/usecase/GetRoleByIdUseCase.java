@@ -1,0 +1,20 @@
+package com.gucardev.springreactboilerplate.domain.role.service.usecase;
+
+import com.gucardev.springreactboilerplate.domain.role.mapper.RoleMapper;
+import com.gucardev.springreactboilerplate.domain.role.model.dto.RoleResponseDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class GetRoleByIdUseCase {
+
+    private final RoleFinder finder;
+    private final RoleMapper mapper;
+
+    @Transactional(readOnly = true)
+    public RoleResponseDto execute(Long id) {
+        return mapper.toDto(finder.findById(id));
+    }
+}
