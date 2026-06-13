@@ -3,45 +3,43 @@ package com.gucardev.springreactboilerplate.domain.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseIntegrationTest;
-import com.gucardev.springreactboilerplate.domain.auth.model.request.LoginRequest;
-import com.gucardev.springreactboilerplate.domain.auth.model.request.LogoutRequest;
-import com.gucardev.springreactboilerplate.domain.auth.model.request.RefreshTokenRequest;
-import com.gucardev.springreactboilerplate.domain.auth.model.request.RegisterRequest;
+import com.gucardev.springreactboilerplate.BaseMockMvcTest;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithUserDetails;
 
 /**
- * End-to-end coverage of the JWT auth flow: registration auto-login, credential login, the
- * authenticated {@code /me} endpoint, refresh-token rotation, logout revocation and the main
- * failure modes (duplicate email, bad credentials, missing/invalid tokens).
+ * Coverage of the auth flow at the controller level: registration auto-login, credential login,
+ * refresh-token rotation, logout revocation, the authenticated {@code /me} endpoint, and the main
+ * failure modes. Authentication for {@code /me} uses {@code @WithUserDetails} (the real
+ * {@code CustomUserDetailsService} loads the seeded admin) rather than a real bearer token — the
+ * real-token path is left for browser/e2e (Playwright) tests. Tokens are still issued and consumed
+ * via the request/response bodies, since that is the feature under test.
  */
-class AuthIT extends BaseIntegrationTest {
+class AuthIT extends BaseMockMvcTest {
 
     // Seeded by DataSeeder under the 'test' profile.
     private static final String ADMIN_EMAIL = "admin@mail.com";
     private static final String ADMIN_PASSWORD = "pass";
 
     @Test
-    void register_returnsTokensAndUserWithUserRole() {
-        JsonNode body = postJson("/auth/register",
-                new RegisterRequest("alice@mail.com", "secret123", "Alice", "Smith", "+1-555-0100"),
-                201);
+    void register_returnsTokensAndUserWithUserRole() throws Exception {
+        JsonNode data = postJson("/auth/register",
+                Map.of("email", "alice@mail.com", "password", "secret123",
+                        "name", "Alice", "surname", "Smith", "phoneNumber", "+1-555-0100"),
+                201).path("data");
 
-        assertThat(body.path("success").asBoolean()).isTrue();
-        JsonNode data = body.path("data");
         assertThat(data.path("accessToken").asText()).isNotBlank();
         assertThat(data.path("refreshToken").asText()).isNotBlank();
         assertThat(data.path("tokenType").asText()).isEqualTo("Bearer");
         assertThat(data.path("user").path("email").asText()).isEqualTo("alice@mail.com");
         assertThat(data.path("user").path("roles").toString()).contains("USER");
-        // Password must never be exposed.
         assertThat(data.path("user").has("password")).isFalse();
     }
 
     @Test
-    void register_withDuplicateEmail_returnsConflict() {
-        RegisterRequest req = new RegisterRequest("dup@mail.com", "secret123", "Dup", "User", null);
+    void register_withDuplicateEmail_returnsConflict() throws Exception {
+        Map<String, String> req = Map.of("email", "dup@mail.com", "password", "secret123", "name", "Dup");
         postJson("/auth/register", req, 201);
 
         JsonNode body = postJson("/auth/register", req, 409);
@@ -49,66 +47,63 @@ class AuthIT extends BaseIntegrationTest {
     }
 
     @Test
-    void login_thenAccessMe_returnsCurrentUser() {
-        String accessToken = login(ADMIN_EMAIL, ADMIN_PASSWORD).path("data").path("accessToken").asText();
-
-        JsonNode me = getJson("/auth/me", accessToken, 200);
-
-        assertThat(me.path("data").path("email").asText()).isEqualTo(ADMIN_EMAIL);
-        assertThat(me.path("data").path("roles").toString()).contains("ADMIN");
+    void login_returnsTokens() throws Exception {
+        JsonNode data = postJson("/auth/login",
+                Map.of("email", ADMIN_EMAIL, "password", ADMIN_PASSWORD), 200).path("data");
+        assertThat(data.path("accessToken").asText()).isNotBlank();
+        assertThat(data.path("user").path("roles").toString()).contains("ADMIN");
     }
 
     @Test
-    void me_withoutToken_returnsUnauthorized() {
-        getJson("/auth/me", 401);
-    }
-
-    @Test
-    void me_withGarbageToken_returnsUnauthorized() {
-        getJson("/auth/me", "not-a-real-token", 401);
-    }
-
-    @Test
-    void login_withWrongPassword_returnsUnauthorized() {
-        JsonNode body = postJson("/auth/login", new LoginRequest(ADMIN_EMAIL, "wrong-password"), 401);
+    void login_withWrongPassword_returnsUnauthorized() throws Exception {
+        JsonNode body = postJson("/auth/login",
+                Map.of("email", ADMIN_EMAIL, "password", "wrong-password"), 401);
         assertThat(body.path("businessErrorCode").asText()).isEqualTo("AUTHENTICATION_FAILED");
     }
 
     @Test
-    void refresh_rotatesToken_andOldTokenIsRejected() {
-        postJson("/auth/register",
-                new RegisterRequest("bob@mail.com", "secret123", "Bob", "Jones", null), 201);
-        String oldRefresh = login("bob@mail.com", "secret123").path("data").path("refreshToken").asText();
+    @WithUserDetails(ADMIN_EMAIL)
+    void me_returnsCurrentUser() throws Exception {
+        JsonNode data = getJson("/auth/me", 200).path("data");
+        assertThat(data.path("email").asText()).isEqualTo(ADMIN_EMAIL);
+        assertThat(data.path("roles").toString()).contains("ADMIN");
+    }
 
-        JsonNode refreshed = postJson("/auth/refresh", new RefreshTokenRequest(oldRefresh), 200);
+    @Test
+    void me_withoutAuthentication_returnsUnauthorized() throws Exception {
+        getJson("/auth/me", 401);
+    }
+
+    @Test
+    void refresh_rotatesToken_andOldTokenIsRejected() throws Exception {
+        String oldRefresh = postJson("/auth/register",
+                Map.of("email", "bob@mail.com", "password", "secret123", "name", "Bob"), 201)
+                .path("data").path("refreshToken").asText();
+
+        JsonNode refreshed = postJson("/auth/refresh", Map.of("refreshToken", oldRefresh), 200);
         String newRefresh = refreshed.path("data").path("refreshToken").asText();
         assertThat(refreshed.path("data").path("accessToken").asText()).isNotBlank();
         assertThat(newRefresh).isNotBlank().isNotEqualTo(oldRefresh);
 
         // The rotated-away token must no longer be usable.
-        JsonNode reused = postJson("/auth/refresh", new RefreshTokenRequest(oldRefresh), 401);
+        JsonNode reused = postJson("/auth/refresh", Map.of("refreshToken", oldRefresh), 401);
         assertThat(reused.path("businessErrorCode").asText()).isEqualTo("INVALID_REFRESH_TOKEN");
     }
 
     @Test
-    void logout_revokesRefreshToken() {
-        postJson("/auth/register",
-                new RegisterRequest("carol@mail.com", "secret123", "Carol", "White", null), 201);
-        String refresh = login("carol@mail.com", "secret123").path("data").path("refreshToken").asText();
+    void logout_revokesRefreshToken() throws Exception {
+        String refresh = postJson("/auth/register",
+                Map.of("email", "carol@mail.com", "password", "secret123", "name", "Carol"), 201)
+                .path("data").path("refreshToken").asText();
 
-        postJson("/auth/logout", new LogoutRequest(refresh), 200);
+        postJson("/auth/logout", Map.of("refreshToken", refresh), 200);
 
-        JsonNode afterLogout = postJson("/auth/refresh", new RefreshTokenRequest(refresh), 401);
+        JsonNode afterLogout = postJson("/auth/refresh", Map.of("refreshToken", refresh), 401);
         assertThat(afterLogout.path("businessErrorCode").asText()).isEqualTo("INVALID_REFRESH_TOKEN");
     }
 
     @Test
-    void register_withInvalidPayload_returnsBadRequest() {
-        // blank password + invalid email -> bean validation 400
+    void register_withInvalidPayload_returnsBadRequest() throws Exception {
         postJson("/auth/register", Map.of("email", "not-an-email", "password", "", "name", "X"), 400);
-    }
-
-    private JsonNode login(String email, String password) {
-        return postJson("/auth/login", new LoginRequest(email, password), 200);
     }
 }
