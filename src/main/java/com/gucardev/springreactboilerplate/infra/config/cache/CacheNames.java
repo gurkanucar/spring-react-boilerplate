@@ -25,4 +25,7 @@ public final class CacheNames {
     public static final String USERS = "users";
     public static final String ROLES = "roles";
     public static final String SETTINGS = "settings";
+
+    /** Stored-file metadata by id — avoids a DB hit on every file read/download. */
+    public static final String FILE_METADATA = "file_metadata";
 }

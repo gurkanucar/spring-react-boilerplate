@@ -11,7 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Streams a file's bytes back through the app (works for any backend, including private filesystem).
+ * Streams a file's bytes back through the app (works for any backend). Metadata comes from
+ * {@link FileFinder} (cached, no DB hit on repeats); the bytes are read from the backend.
  */
 @Service
 @RequiredArgsConstructor
