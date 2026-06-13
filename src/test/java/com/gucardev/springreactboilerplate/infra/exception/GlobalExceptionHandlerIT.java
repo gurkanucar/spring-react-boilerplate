@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import com.gucardev.springreactboilerplate.domain.example.model.request.ExampleFilterRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  * advice with security enabled.
  */
 @Import(GlobalExceptionHandlerIT.TestController.class)
-class GlobalExceptionHandlerIT extends BaseMockMvcTest {
+class GlobalExceptionHandlerIT extends BaseIntegrationTest {
 
     @Test
     void businessException_rendersEnvelope_withResolvedI18nMessage() throws Exception {

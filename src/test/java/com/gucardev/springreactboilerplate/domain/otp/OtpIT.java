@@ -3,7 +3,7 @@ package com.gucardev.springreactboilerplate.domain.otp;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import com.gucardev.springreactboilerplate.domain.otp.enums.OtpType;
 import com.gucardev.springreactboilerplate.domain.otp.repository.OtpRepository;
 import java.util.Map;
@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * test reads it back from {@link OtpRepository} (stored as-is) to drive verification — the same
  * thing a real user does after receiving it out-of-band.
  */
-class OtpIT extends BaseMockMvcTest {
+class OtpIT extends BaseIntegrationTest {
 
     @Autowired
     private OtpRepository otpRepository;

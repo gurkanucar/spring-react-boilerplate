@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
  * rules and the entry-point/deny behaviour — not JWT authentication itself (covered by the
  * real-token {@code AuthIT}/{@code UserRoleManagementIT}).
  */
-class AdminAuthorizationTest extends BaseMockMvcTest {
+class AdminAuthorizationTest extends BaseIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")

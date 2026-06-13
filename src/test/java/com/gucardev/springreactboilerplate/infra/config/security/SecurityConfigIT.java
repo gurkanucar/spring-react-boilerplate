@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * under MockMvc (installed by {@code @AutoConfigureMockMvc}).
  */
 @Import(SecurityConfigIT.ProtectedController.class)
-class SecurityConfigIT extends BaseMockMvcTest {
+class SecurityConfigIT extends BaseIntegrationTest {
 
     @Test
     void unauthenticatedRequest_returns401_apiErrorEnvelope() throws Exception {

@@ -3,7 +3,7 @@ package com.gucardev.springreactboilerplate.domain.otp;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -13,7 +13,7 @@ import org.springframework.test.context.TestPropertySource;
  * suite default is 0) and asserts a back-to-back send is rejected.
  */
 @TestPropertySource(properties = "otp.resend-cooldown-seconds=120")
-class OtpResendCooldownIT extends BaseMockMvcTest {
+class OtpResendCooldownIT extends BaseIntegrationTest {
 
     @Test
     void secondSendWithinCooldown_isRejected() throws Exception {

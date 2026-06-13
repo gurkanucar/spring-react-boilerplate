@@ -5,14 +5,18 @@ import com.gucardev.springreactboilerplate.domain.user.mapper.UserMapper;
 import com.gucardev.springreactboilerplate.domain.user.model.dto.UserResponseDto;
 import com.gucardev.springreactboilerplate.domain.user.model.request.UpdateUserRequest;
 import com.gucardev.springreactboilerplate.domain.user.repository.UserRepository;
+import com.gucardev.springreactboilerplate.infra.config.cache.CacheManagers;
+import com.gucardev.springreactboilerplate.infra.config.cache.CacheNames;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Admin user update: applies non-null profile/status fields and, when {@code roles} is provided,
- * replaces the user's role set.
+ * replaces the user's role set. Evicts the cached user principals so role/enabled changes take
+ * effect on the next request.
  */
 @Service
 @RequiredArgsConstructor
@@ -23,6 +27,7 @@ public class UpdateUserUseCase {
     private final UserMapper mapper;
     private final UserRoleResolver roleResolver;
 
+    @CacheEvict(cacheNames = CacheNames.USERS, cacheManager = CacheManagers.CAFFEINE_1M, allEntries = true)
     @Transactional
     public UserResponseDto execute(UUID id, UpdateUserRequest request) {
         User user = finder.findById(id);

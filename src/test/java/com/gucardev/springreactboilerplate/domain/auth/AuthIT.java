@@ -3,7 +3,7 @@ package com.gucardev.springreactboilerplate.domain.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -16,7 +16,7 @@ import org.springframework.security.test.context.support.WithUserDetails;
  * real-token path is left for browser/e2e (Playwright) tests. Tokens are still issued and consumed
  * via the request/response bodies, since that is the feature under test.
  */
-class AuthIT extends BaseMockMvcTest {
+class AuthIT extends BaseIntegrationTest {
 
     // Seeded by DataSeeder under the 'test' profile.
     private static final String ADMIN_EMAIL = "admin@mail.com";

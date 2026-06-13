@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
  * metadata, url/download, delete, and the upload guards: extension deny-list, magic-byte content vs
  * declared-extension mismatch, empty files, and that the endpoints require authentication.
  */
-class FileIT extends BaseMockMvcTest {
+class FileIT extends BaseIntegrationTest {
 
     // A valid 1x1 PNG — Tika detects image/png from its signature.
     private static final byte[] PNG = Base64.getDecoder().decode(

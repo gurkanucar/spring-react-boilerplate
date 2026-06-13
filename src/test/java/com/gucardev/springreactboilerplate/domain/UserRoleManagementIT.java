@@ -3,7 +3,7 @@ package com.gucardev.springreactboilerplate.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
  * themselves (admin-only, 401/403) are covered by {@link AdminAuthorizationTest}.
  */
 @WithMockUser(roles = "ADMIN")
-class UserRoleManagementIT extends BaseMockMvcTest {
+class UserRoleManagementIT extends BaseIntegrationTest {
 
     @Test
     void role_crud_roundTrip() throws Exception {

@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
  * generated and stored (downloadable), the url endpoint exposes a thumbnail URL, and non-images are
  * rejected. Uses Scrimage's bundled WebP encoder.
  */
-class ImageIT extends BaseMockMvcTest {
+class ImageIT extends BaseIntegrationTest {
 
     // A real, fully decodable PNG (Scrimage decodes it, unlike a 1x1 stub).
     private static final byte[] PNG = pngBytes();

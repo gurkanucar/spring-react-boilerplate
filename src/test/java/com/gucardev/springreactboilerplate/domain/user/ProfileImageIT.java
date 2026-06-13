@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gucardev.springreactboilerplate.BaseMockMvcTest;
+import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.MvcResult;
  * that {@code /auth/me} reflects it, and that removal clears it.
  */
 @WithUserDetails("admin@mail.com")
-class ProfileImageIT extends BaseMockMvcTest {
+class ProfileImageIT extends BaseIntegrationTest {
 
     private static final byte[] PNG = pngBytes();
 
