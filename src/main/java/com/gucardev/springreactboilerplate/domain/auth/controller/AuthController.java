@@ -10,19 +10,26 @@ import com.gucardev.springreactboilerplate.domain.auth.service.usecase.LoginUseC
 import com.gucardev.springreactboilerplate.domain.auth.service.usecase.LogoutUseCase;
 import com.gucardev.springreactboilerplate.domain.auth.service.usecase.RefreshTokenUseCase;
 import com.gucardev.springreactboilerplate.domain.auth.service.usecase.RegisterUseCase;
+import com.gucardev.springreactboilerplate.domain.file.enums.StorageType;
 import com.gucardev.springreactboilerplate.domain.user.model.dto.UserResponseDto;
+import com.gucardev.springreactboilerplate.domain.user.service.usecase.RemoveProfileImageUseCase;
+import com.gucardev.springreactboilerplate.domain.user.service.usecase.SetProfileImageUseCase;
 import com.gucardev.springreactboilerplate.infra.config.response.ApiResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Authentication endpoints. {@code register/login/refresh/logout} are public (bound in
@@ -39,6 +46,8 @@ public class AuthController {
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final LogoutUseCase logoutUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
+    private final SetProfileImageUseCase setProfileImageUseCase;
+    private final RemoveProfileImageUseCase removeProfileImageUseCase;
 
     @Operation(summary = "Register a new account and receive tokens")
     @PostMapping("/register")
@@ -74,5 +83,20 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponseWrapper<UserResponseDto>> me() {
         return ResponseEntity.ok(ApiResponseWrapper.ok(getCurrentUserUseCase.execute()));
+    }
+
+    @Operation(summary = "Set the current user's profile image (optimized + thumbnailed). "
+            + "storageType selects the backend; omit for the default.")
+    @PostMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponseWrapper<UserResponseDto>> setProfileImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "storageType", required = false) StorageType storageType) {
+        return ResponseEntity.ok(ApiResponseWrapper.ok(setProfileImageUseCase.execute(file, storageType)));
+    }
+
+    @Operation(summary = "Remove the current user's profile image")
+    @DeleteMapping("/me/profile-image")
+    public ResponseEntity<ApiResponseWrapper<UserResponseDto>> removeProfileImage() {
+        return ResponseEntity.ok(ApiResponseWrapper.ok(removeProfileImageUseCase.execute()));
     }
 }

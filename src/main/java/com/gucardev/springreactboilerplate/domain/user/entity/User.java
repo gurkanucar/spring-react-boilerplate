@@ -59,6 +59,11 @@ public class User extends BaseEntity {
 
     private String phoneNumber;
 
+    /** Id of the user's profile image in the file store (an optimized image upload); null if unset. */
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "profile_image_id")
+    private UUID profileImageId;
+
     private Boolean activated;
 
     @Builder.Default

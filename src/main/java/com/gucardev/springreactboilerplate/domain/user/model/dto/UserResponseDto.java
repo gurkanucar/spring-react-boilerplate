@@ -33,6 +33,16 @@ public class UserResponseDto extends BaseDto {
     @Schema(description = "Phone number", example = "+1-555-0100")
     private String phoneNumber;
 
+    @Schema(description = "Profile image file id; null if unset",
+            example = "3f1e7c9a-2b6d-4c8e-9f0a-1d2e3f4a5b6c")
+    private UUID profileImageId;
+
+    @Schema(description = "Resolved profile image URL (CDN or app endpoint); null if unset")
+    private String profileImageUrl;
+
+    @Schema(description = "Resolved profile image thumbnail URL; null if unset")
+    private String profileImageThumbnailUrl;
+
     @Schema(description = "Whether the email has been verified", example = "true")
     private Boolean activated;
 

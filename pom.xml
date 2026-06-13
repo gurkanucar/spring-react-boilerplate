@@ -196,6 +196,13 @@
             <artifactId>tika-core</artifactId>
             <version>3.1.0</version>
         </dependency>
+        <!-- Pin commons-io new enough for Tika's magic detection (UnsynchronizedByteArrayInputStream.builder),
+             overriding the older version pulled in transitively. -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.18.0</version>
+        </dependency>
 
         <!-- Apache POI - Excel (xlsx) import/export -->
         <dependency>

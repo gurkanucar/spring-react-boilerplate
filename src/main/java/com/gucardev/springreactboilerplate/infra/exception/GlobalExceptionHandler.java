@@ -24,6 +24,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -277,6 +278,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         MessageUtil.getMessage("error.type_mismatch",
                                 new Object[]{ex.getName(), expected, ex.getValue()}),
                         "TYPE_MISMATCH", getTraceId()));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException ex,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+
+        log.warn("[UPLOAD] file exceeds multipart limit");
+
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body((Object) ApiError.business(413,
+                        MessageUtil.getMessage("error.file.upload_size_exceeded"),
+                        "FILE_TOO_LARGE", getTraceId()));
     }
 
     // -------------------------------------------------------------------------
