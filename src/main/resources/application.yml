@@ -79,7 +79,9 @@ management:
 # ==================== SECURITY CONFIGURATION ====================
 security:
   jwt:
-    secret-key: ${JWT_SECRET_KEY}
+    # 32+ byte HMAC secret. A dev/test default is provided so the app boots out of the box;
+    # ALWAYS override with a strong JWT_SECRET_KEY env var in real environments.
+    secret-key: ${JWT_SECRET_KEY:dev-only-change-me-please-0123456789-abcdefghijklmnopqrstuvwxyz}
     token-validity-in-minutes: 800
     refresh-token-validity-in-minutes: 2400
     refresh-token-cleanup-cron: "0 0 * * * *"
@@ -88,7 +90,10 @@ security:
     /swagger-ui.html/**,
     /swagger-ui/**,
     /v3/api-docs/**,
-    /auth/**,
+    /auth/register,
+    /auth/login,
+    /auth/refresh,
+    /auth/logout,
     /public/**,
     /api/v1/public/**,
     /ws/**,
