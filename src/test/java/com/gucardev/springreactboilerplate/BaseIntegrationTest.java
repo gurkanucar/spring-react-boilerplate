@@ -1,5 +1,8 @@
 package com.gucardev.springreactboilerplate;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
@@ -8,23 +11,26 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Single base for HTTP-level integration tests. Boots the full application context in a MOCK
- * servlet environment and exposes a {@link RestTestClient} bound to it — so the real Spring Security
- * filter chain runs, yet requests execute on the test thread, which means {@code @WithMockUser}/
- * {@code @WithUserDetails} work and each test runs in a transaction that rolls back.
+ * servlet environment; the real Spring Security filter chain runs, requests execute on the test
+ * thread (so {@code @WithMockUser}/{@code @WithUserDetails} work), and each test runs in a
+ * transaction that rolls back.
  *
- * <p>Use the {@code client} directly (status/jsonPath assertions, multipart, byte downloads), or the
- * {@code postJson}/{@code getJson}/{@code putJson}/{@code deleteJson} helpers, which send a request
- * <em>object</em> as JSON, assert the status and return the parsed response body.
+ * <p>Use {@link #client} ({@link RestTestClient}) for everything — JSON (the {@code postJson}/
+ * {@code getJson}/{@code putJson}/{@code deleteJson} helpers take a request <em>object</em>), status
+ * assertions and byte downloads. Multipart uploads are the one exception: {@code RestTestClient}
+ * over MockMvc sends raw multipart bytes that {@code MockHttpServletRequest} can't parse, so file
+ * uploads go through {@link MockMvc}'s {@code multipart()} builder via {@link #uploadMultipart}.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
@@ -38,6 +44,9 @@ public abstract class BaseIntegrationTest {
 
     @Autowired
     protected RestTestClient client;
+
+    @Autowired
+    protected MockMvc mockMvc;
 
     protected JsonNode postJson(String uri, Object body, int expectedStatus) {
         return parse(client.post().uri(uri).contentType(MediaType.APPLICATION_JSON).body(body)
@@ -66,33 +75,28 @@ public abstract class BaseIntegrationTest {
     /** Multipart upload of a single {@code file} part plus optional string params; returns parsed body. */
     protected JsonNode uploadMultipart(String uri, byte[] fileBytes, String filename, MediaType fileType,
                                        Map<String, String> params, int expectedStatus) {
-        return parse(multipart(uri, fileBytes, filename, fileType, params)
-                .expectStatus().isEqualTo(expectedStatus)
-                .expectBody().returnResult().getResponseBody());
+        try {
+            return parse(multipartUpload(uri, fileBytes, filename, fileType, params)
+                    .andExpect(status().is(expectedStatus))
+                    .andReturn().getResponse().getContentAsByteArray());
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-    /**
-     * Raw multipart exchange, for callers that need to assert headers/bytes themselves. The server
-     * detects the real content type from the bytes (Tika), so the part is sent with the filename
-     * only ({@code fileType} is accepted for readability but not transmitted per-part).
-     */
-    protected RestTestClient.ResponseSpec multipart(String uri, byte[] fileBytes, String filename,
-                                                    MediaType fileType, Map<String, String> params) {
-        ByteArrayResource fileResource = new ByteArrayResource(fileBytes) {
-            @Override
-            public String getFilename() {
-                return filename;
+    /** Raw multipart upload, for callers asserting the status themselves. */
+    protected ResultActions multipartUpload(String uri, byte[] fileBytes, String filename,
+                                            MediaType fileType, Map<String, String> params) {
+        try {
+            MockMultipartHttpServletRequestBuilder builder = multipart(uri)
+                    .file(new MockMultipartFile("file", filename, fileType.toString(), fileBytes));
+            if (params != null) {
+                params.forEach(builder::param);
             }
-        };
-        MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-        parts.add("file", fileResource);
-        if (params != null) {
-            params.forEach(parts::add);
+            return mockMvc.perform(builder);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
-        return client.post().uri(uri)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(parts)
-                .exchange();
     }
 
     private JsonNode parse(byte[] body) {

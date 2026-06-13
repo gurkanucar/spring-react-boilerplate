@@ -108,6 +108,6 @@ class FileIT extends BaseIntegrationTest {
 
     @Test
     void upload_withoutAuth_isUnauthorized() {
-        multipart("/files", PNG, "x.png", MediaType.IMAGE_PNG, null).expectStatus().isUnauthorized();
+        uploadMultipart("/files", PNG, "x.png", MediaType.IMAGE_PNG, null, 401);
     }
 }
