@@ -12,10 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetFileUseCase {
 
     private final FileFinder finder;
-    private final FileMapper mapper;
+    private final FileMapper fileMapper;
 
     @Transactional(readOnly = true)
     public FileResponseDto execute(UUID id) {
-        return mapper.toDto(finder.findById(id));
+        return fileMapper.toDto(finder.findById(id));
     }
 }

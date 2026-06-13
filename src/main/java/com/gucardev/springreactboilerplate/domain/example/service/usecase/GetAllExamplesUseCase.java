@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetAllExamplesUseCase {
 
     private final ExampleRepository repository;
-    private final ExampleMapper mapper;
+    private final ExampleMapper exampleMapper;
 
     @Transactional(readOnly = true)
     public Page<ExampleResponseDto> execute(ExampleFilterRequest filter) {
         return repository.findAll(ExampleSpecification.build(filter), filter.toPageable())
-                .map(mapper::toDto);
+                .map(exampleMapper::toDto);
     }
 }

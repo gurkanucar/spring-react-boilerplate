@@ -11,10 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetRoleByIdUseCase {
 
     private final RoleFinder finder;
-    private final RoleMapper mapper;
+    private final RoleMapper roleMapper;
 
     @Transactional(readOnly = true)
     public RoleResponseDto execute(Long id) {
-        return mapper.toDto(finder.findById(id));
+        return roleMapper.toDto(finder.findById(id));
     }
 }

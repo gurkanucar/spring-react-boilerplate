@@ -11,10 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetExampleByIdUseCase {
 
     private final ExampleFinder finder;
-    private final ExampleMapper mapper;
+    private final ExampleMapper exampleMapper;
 
     @Transactional(readOnly = true)
     public ExampleResponseDto execute(Long id) {
-        return mapper.toDto(finder.findById(id));
+        return exampleMapper.toDto(finder.findById(id));
     }
 }

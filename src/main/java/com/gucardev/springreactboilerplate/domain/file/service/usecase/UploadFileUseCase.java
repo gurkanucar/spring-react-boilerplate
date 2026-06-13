@@ -29,7 +29,7 @@ public class UploadFileUseCase {
     private final FileValidator validator;
     private final StorageProviderRegistry storageRegistry;
     private final FileRepository repository;
-    private final FileMapper mapper;
+    private final FileMapper fileMapper;
 
     /**
      * @param storageType backend to store to; {@code null} uses the configured default.
@@ -55,6 +55,6 @@ public class UploadFileUseCase {
 
         provider.store(key, upload.content(), upload.contentType());
 
-        return mapper.toDto(stored);
+        return fileMapper.toDto(stored);
     }
 }

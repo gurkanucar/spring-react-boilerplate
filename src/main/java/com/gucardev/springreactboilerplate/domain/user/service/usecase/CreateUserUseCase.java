@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateUserUseCase {
 
     private final UserRepository repository;
-    private final UserMapper mapper;
+    private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserRoleResolver roleResolver;
 
@@ -30,12 +30,12 @@ public class CreateUserUseCase {
             throw UserExceptionType.EMAIL_ALREADY_EXISTS.toException(request.email());
         }
 
-        User user = mapper.toEntity(request);
+        User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setActivated(request.activated() == null || request.activated());
         user.setIsActive(request.isActive() == null || request.isActive());
         user.setRoles(roleResolver.resolve(request.roles()));
 
-        return mapper.toDto(repository.save(user));
+        return userMapper.toDto(repository.save(user));
     }
 }

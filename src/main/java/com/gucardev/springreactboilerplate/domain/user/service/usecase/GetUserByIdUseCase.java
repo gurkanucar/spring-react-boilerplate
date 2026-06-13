@@ -12,10 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetUserByIdUseCase {
 
     private final UserFinder finder;
-    private final UserMapper mapper;
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public UserResponseDto execute(UUID id) {
-        return mapper.toDto(finder.findById(id));
+        return userMapper.toDto(finder.findById(id));
     }
 }

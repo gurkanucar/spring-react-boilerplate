@@ -18,13 +18,13 @@ public class UpdateRoleUseCase {
 
     private final RoleFinder finder;
     private final RoleRepository repository;
-    private final RoleMapper mapper;
+    private final RoleMapper roleMapper;
 
     @CacheEvict(cacheNames = CacheNames.ROLES, cacheManager = CacheManagers.CAFFEINE_30M, allEntries = true)
     @Transactional
     public RoleResponseDto execute(Long id, UpdateRoleRequest request) {
         Role role = finder.findById(id);
-        mapper.updateEntity(request, role);
-        return mapper.toDto(repository.save(role));
+        roleMapper.updateEntity(request, role);
+        return roleMapper.toDto(repository.save(role));
     }
 }

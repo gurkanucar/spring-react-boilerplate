@@ -24,14 +24,14 @@ public class UpdateUserUseCase {
 
     private final UserFinder finder;
     private final UserRepository repository;
-    private final UserMapper mapper;
+    private final UserMapper userMapper;
     private final UserRoleResolver roleResolver;
 
     @CacheEvict(cacheNames = CacheNames.USERS, cacheManager = CacheManagers.CAFFEINE_1M, allEntries = true)
     @Transactional
     public UserResponseDto execute(UUID id, UpdateUserRequest request) {
         User user = finder.findById(id);
-        mapper.updateEntity(request, user);
+        userMapper.updateEntity(request, user);
         // Status flags handled explicitly (record `isActive()` accessor is ambiguous for MapStruct).
         if (request.activated() != null) {
             user.setActivated(request.activated());
@@ -42,6 +42,6 @@ public class UpdateUserUseCase {
         if (request.roles() != null) {
             user.setRoles(roleResolver.resolve(request.roles()));
         }
-        return mapper.toDto(repository.save(user));
+        return userMapper.toDto(repository.save(user));
     }
 }

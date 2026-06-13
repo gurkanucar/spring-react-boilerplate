@@ -19,7 +19,7 @@ public class ActivateExampleUseCase {
 
     private final ExampleFinder finder;
     private final ExampleRepository repository;
-    private final ExampleMapper mapper;
+    private final ExampleMapper exampleMapper;
 
     @Transactional
     public ExampleResponseDto execute(Long id) {
@@ -28,6 +28,6 @@ public class ActivateExampleUseCase {
             throw ExampleExceptionType.ALREADY_ACTIVE.toException();
         }
         example.setActive(true);
-        return mapper.toDto(repository.save(example));
+        return exampleMapper.toDto(repository.save(example));
     }
 }

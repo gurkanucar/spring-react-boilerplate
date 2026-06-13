@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetAllUsersUseCase {
 
     private final UserRepository repository;
-    private final UserMapper mapper;
+    private final UserMapper userMapperImpl;
     private final FileRepository fileRepository;
     private final FileUrlResolver fileUrlResolver;
 
@@ -36,7 +36,7 @@ public class GetAllUsersUseCase {
 
         // Resolve every profile image on the page in one query, then map against that batch.
         Map<UUID, FileUrlDto> urlsByImageId = batchResolveProfileImages(users.getContent());
-        return users.map(user -> mapper.toDto(user, urlsByImageId::get));
+        return users.map(user -> userMapperImpl.toDto(user, urlsByImageId::get));
     }
 
     private Map<UUID, FileUrlDto> batchResolveProfileImages(List<User> users) {

@@ -9,16 +9,10 @@ import com.gucardev.springreactboilerplate.domain.user.model.dto.UserResponseDto
 import com.gucardev.springreactboilerplate.domain.user.model.request.CreateUserRequest;
 import com.gucardev.springreactboilerplate.domain.user.model.request.UpdateUserRequest;
 import com.gucardev.springreactboilerplate.domain.user.service.ProfileImageUrlLookup;
-import java.util.UUID;
-import org.mapstruct.AfterMapping;
-import org.mapstruct.Context;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.UUID;
 
 /**
  * MapStruct mapper for {@link User}. Roles flatten to name strings on read. After mapping, the
@@ -38,12 +32,16 @@ public abstract class UserMapper {
     @Autowired
     protected FileUrlResolver fileUrlResolver;
 
-    /** Single-user mapping: resolves the profile image (one lookup) on the fly. */
+    /**
+     * Single-user mapping: resolves the profile image (one lookup) on the fly.
+     */
     public UserResponseDto toDto(User user) {
         return toDto(user, this::resolveSingle);
     }
 
-    /** Mapping with a caller-provided image-url lookup (used by list endpoints for batch resolution). */
+    /**
+     * Mapping with a caller-provided image-url lookup (used by list endpoints for batch resolution).
+     */
     public abstract UserResponseDto toDto(User user, @Context ProfileImageUrlLookup imageUrlLookup);
 
     @Mapping(target = "id", ignore = true)

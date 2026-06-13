@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetAllRolesUseCase {
 
     private final RoleRepository repository;
-    private final RoleMapper mapper;
+    private final RoleMapper roleMapper;
 
     @Transactional(readOnly = true)
     public Page<RoleResponseDto> execute(RoleFilterRequest filter) {
         return repository.findAll(RoleSpecification.build(filter), filter.toPageable())
-                .map(mapper::toDto);
+                .map(roleMapper::toDto);
     }
 }

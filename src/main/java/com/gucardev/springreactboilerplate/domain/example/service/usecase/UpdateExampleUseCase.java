@@ -15,12 +15,12 @@ public class UpdateExampleUseCase {
 
     private final ExampleFinder finder;
     private final ExampleRepository repository;
-    private final ExampleMapper mapper;
+    private final ExampleMapper exampleMapper;
 
     @Transactional
     public ExampleResponseDto execute(Long id, UpdateExampleRequest request) {
         Example example = finder.findById(id);
-        mapper.updateEntity(request, example);
-        return mapper.toDto(repository.save(example));
+        exampleMapper.updateEntity(request, example);
+        return exampleMapper.toDto(repository.save(example));
     }
 }

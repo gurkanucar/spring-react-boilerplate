@@ -34,7 +34,7 @@ public class UploadImageUseCase {
     private final ImageOptimizer imageOptimizer;
     private final StorageProviderRegistry storageRegistry;
     private final FileRepository repository;
-    private final FileMapper mapper;
+    private final FileMapper fileMapper;
 
     /**
      * @param storageType backend to store to; {@code null} uses the configured default.
@@ -68,6 +68,6 @@ public class UploadImageUseCase {
         provider.store(mainKey, optimized.main(), ImageOptimizer.WEBP_CONTENT_TYPE);
         provider.store(thumbnailKey, optimized.thumbnail(), ImageOptimizer.WEBP_CONTENT_TYPE);
 
-        return mapper.toDto(stored);
+        return fileMapper.toDto(stored);
     }
 }

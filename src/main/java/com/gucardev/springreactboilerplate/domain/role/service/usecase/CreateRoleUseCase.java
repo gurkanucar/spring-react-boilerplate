@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateRoleUseCase {
 
     private final RoleRepository repository;
-    private final RoleMapper mapper;
+    private final RoleMapper roleMapper;
 
     @CacheEvict(cacheNames = CacheNames.ROLES, cacheManager = CacheManagers.CAFFEINE_30M, allEntries = true)
     @Transactional
@@ -25,6 +25,6 @@ public class CreateRoleUseCase {
         if (repository.existsByName(request.name())) {
             throw RoleExceptionType.NAME_ALREADY_EXISTS.toException(request.name());
         }
-        return mapper.toDto(repository.save(mapper.toEntity(request)));
+        return roleMapper.toDto(repository.save(roleMapper.toEntity(request)));
     }
 }

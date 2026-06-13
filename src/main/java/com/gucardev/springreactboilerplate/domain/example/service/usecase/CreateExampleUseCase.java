@@ -13,10 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateExampleUseCase {
 
     private final ExampleRepository repository;
-    private final ExampleMapper mapper;
+    private final ExampleMapper exampleMapper;
 
     @Transactional
     public ExampleResponseDto execute(CreateExampleRequest request) {
-        return mapper.toDto(repository.save(mapper.toEntity(request)));
+        return exampleMapper.toDto(repository.save(exampleMapper.toEntity(request)));
     }
 }
