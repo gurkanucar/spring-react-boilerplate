@@ -1,12 +1,6 @@
 package com.gucardev.springreactboilerplate.infra.exception;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gucardev.springreactboilerplate.BaseIntegrationTest;
 import com.gucardev.springreactboilerplate.domain.example.model.request.ExampleFilterRequest;
@@ -23,58 +17,66 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * End-to-end check that {@link GlobalExceptionHandler} renders the {@link
- * com.gucardev.springreactboilerplate.infra.exception.model.ApiError} envelope and that
- * i18n messages resolve from the bundles. The test endpoints live under a {@code /public/**}
- * path (permitted by {@code security.ignored-paths}) so the request reaches the controller
- * advice with security enabled.
+ * com.gucardev.springreactboilerplate.infra.exception.model.ApiError} envelope and that i18n
+ * messages resolve from the bundles. The test endpoints live under a {@code /public/**} path
+ * (permitted by {@code security.ignored-paths}) so the request reaches the controller advice.
  */
 @Import(GlobalExceptionHandlerIT.TestController.class)
 class GlobalExceptionHandlerIT extends BaseIntegrationTest {
 
     @Test
-    void businessException_rendersEnvelope_withResolvedI18nMessage() throws Exception {
-        mockMvc.perform(get("/public/__errtest/notfound").header("Accept-Language", "en"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.businessErrorCode").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("User with id 5 was not found."));
+    void businessException_rendersEnvelope_withResolvedI18nMessage() {
+        client.get().uri("/public/__errtest/notfound").header("Accept-Language", "en")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.status").isEqualTo(404)
+                .jsonPath("$.businessErrorCode").isEqualTo("NOT_FOUND")
+                .jsonPath("$.message").isEqualTo("User with id 5 was not found.");
     }
 
     @Test
-    void businessException_resolvesTurkishByDefaultLocale() throws Exception {
-        mockMvc.perform(get("/public/__errtest/notfound"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("5 ID'li User bulunamadı."));
+    void businessException_resolvesTurkishByDefaultLocale() {
+        client.get().uri("/public/__errtest/notfound")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.message").isEqualTo("5 ID'li User bulunamadı.");
     }
 
     @Test
-    void unexpectedRuntime_returns500_genericMessage_noLeak() throws Exception {
-        mockMvc.perform(get("/public/__errtest/runtime").header("Accept-Language", "en"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string(containsString("An unexpected error occurred. Please try again later.")))
-                // the raw exception text must NOT leak to the client
-                .andExpect(content().string(not(containsString("super secret internal detail"))));
+    void unexpectedRuntime_returns500_genericMessage_noLeak() {
+        client.get().uri("/public/__errtest/runtime").header("Accept-Language", "en")
+                .exchange()
+                .expectStatus().isEqualTo(500)
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("An unexpected error occurred. Please try again later.");
+                    assertThat(body).doesNotContain("super secret internal detail");
+                });
     }
 
     @Test
-    void validationMessage_resolvesFromMessageBundle() throws Exception {
-        // The @Pattern message {sort.direction.pattern.exception} must resolve from
-        // messages.properties (validator wired to the app MessageSource), not render literally.
-        mockMvc.perform(get("/public/__errtest/filter").param("sortDir", "bad").header("Accept-Language", "en"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.validationErrors.sortDir").value("Sort direction must be 'asc' or 'desc'."));
+    void validationMessage_resolvesFromMessageBundle() {
+        client.get().uri("/public/__errtest/filter?sortDir=bad").header("Accept-Language", "en")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.validationErrors.sortDir").isEqualTo("Sort direction must be 'asc' or 'desc'.");
     }
 
     @Test
-    void validation_returns400_withFieldErrors() throws Exception {
-        mockMvc.perform(post("/public/__errtest/validate")
-                        .header("Accept-Language", "en")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.businessErrorCode").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.validationErrors.name").exists());
+    void validation_returns400_withFieldErrors() {
+        client.post().uri("/public/__errtest/validate")
+                .header("Accept-Language", "en")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new TestController.Payload(null))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.businessErrorCode").isEqualTo("VALIDATION_FAILED")
+                .jsonPath("$.validationErrors.name").exists();
     }
 
     @RestController

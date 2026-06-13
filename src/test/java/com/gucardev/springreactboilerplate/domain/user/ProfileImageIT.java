@@ -1,9 +1,6 @@
 package com.gucardev.springreactboilerplate.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.gucardev.springreactboilerplate.BaseIntegrationTest;
@@ -15,14 +12,14 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.web.servlet.MvcResult;
 
 /**
  * Setting and removing the current user's profile image. Runs as the seeded admin (real user loaded
  * via {@code @WithUserDetails}). Verifies the user references the uploaded (optimized) image by id,
- * that {@code /auth/me} reflects it, and that removal clears it.
+ * that the resolved URLs come back, that {@code /auth/me} and the user list reflect it, and that
+ * removal clears it.
  */
 @WithUserDetails("admin@mail.com")
 class ProfileImageIT extends BaseIntegrationTest {
@@ -30,13 +27,9 @@ class ProfileImageIT extends BaseIntegrationTest {
     private static final byte[] PNG = pngBytes();
 
     @Test
-    void setProfileImage_thenRemove() throws Exception {
-        // set -> user now references the uploaded image
-        MvcResult setResult = mockMvc.perform(multipart("/auth/me/profile-image")
-                        .file(new MockMultipartFile("file", "avatar.png", "image/png", PNG)))
-                .andExpect(status().isOk())
-                .andReturn();
-        JsonNode setData = MAPPER.readTree(setResult.getResponse().getContentAsString()).path("data");
+    void setProfileImage_thenRemove() {
+        JsonNode setData = uploadMultipart("/auth/me/profile-image", PNG, "avatar.png",
+                MediaType.IMAGE_PNG, null, 200).path("data");
         String imageId = setData.path("profileImageId").asText();
         assertThat(imageId).isNotBlank();
         // resolved URLs are returned right away (filesystem -> app download endpoints)
@@ -51,19 +44,13 @@ class ProfileImageIT extends BaseIntegrationTest {
         getJson("/files/" + imageId, 200);
 
         // remove -> cleared
-        MvcResult removeResult = mockMvc.perform(delete("/auth/me/profile-image"))
-                .andExpect(status().isOk())
-                .andReturn();
-        JsonNode removeData = MAPPER.readTree(removeResult.getResponse().getContentAsString()).path("data");
+        JsonNode removeData = deleteJson("/auth/me/profile-image", 200).path("data");
         assertThat(removeData.hasNonNull("profileImageId")).isFalse();
     }
 
     @Test
-    void profileImageUrl_isResolvedInUserList_viaBatch() throws Exception {
-        // admin sets a profile image, then lists users (admin role) — the list row carries the url
-        mockMvc.perform(multipart("/auth/me/profile-image")
-                        .file(new MockMultipartFile("file", "a.png", "image/png", PNG)))
-                .andExpect(status().isOk());
+    void profileImageUrl_isResolvedInUserList_viaBatch() {
+        uploadMultipart("/auth/me/profile-image", PNG, "a.png", MediaType.IMAGE_PNG, null, 200);
 
         JsonNode data = getJson("/api/v1/users?email=admin@mail.com", 200).path("data");
         assertThat(data.size()).isGreaterThan(0);

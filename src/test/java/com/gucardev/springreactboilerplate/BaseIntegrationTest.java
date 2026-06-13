@@ -1,75 +1,105 @@
 package com.gucardev.springreactboilerplate;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Single base for HTTP-level tests. Boots the full application context with a MOCK servlet
- * environment and drives the controllers through {@link MockMvc}, which installs the real Spring
- * Security filter chain (via {@code @AutoConfigureMockMvc}) yet runs each request on the test
- * thread — so Spring Security's {@code @WithMockUser}/{@code @WithUserDetails} annotations work.
+ * Single base for HTTP-level integration tests. Boots the full application context in a MOCK
+ * servlet environment and exposes a {@link RestTestClient} bound to it — so the real Spring Security
+ * filter chain runs, yet requests execute on the test thread, which means {@code @WithMockUser}/
+ * {@code @WithUserDetails} work and each test runs in a transaction that rolls back.
  *
- * <p>Authenticate via {@code @WithMockUser}/{@code @WithUserDetails} instead of minting real JWTs.
- * This layer deliberately does <em>not</em> exercise the JWT authentication filter with a real
- * token — that end-to-end (real server + real bearer) path is intended for browser/e2e (Playwright)
- * tests. Each test runs in a transaction that rolls back, so writes don't leak between tests or
- * pollute the shared context.
- *
- * <p>The {@code postJson}/{@code getJson}/{@code putJson}/{@code deleteJson} helpers send/receive
- * JSON, assert the HTTP status and return the parsed response body.
+ * <p>Use the {@code client} directly (status/jsonPath assertions, multipart, byte downloads), or the
+ * {@code postJson}/{@code getJson}/{@code putJson}/{@code deleteJson} helpers, which send a request
+ * <em>object</em> as JSON, assert the status and return the parsed response body.
  */
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
-@Import(NoOpCacheConfig.class)
+@AutoConfigureRestTestClient
 @ActiveProfiles("test")
+@Import(NoOpCacheConfig.class)
 @Transactional
 public abstract class BaseIntegrationTest {
 
     protected static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Autowired
-    protected MockMvc mockMvc;
+    protected RestTestClient client;
 
-    protected JsonNode postJson(String uri, Object body, int expectedStatus) throws Exception {
-        return exchange(post(uri).contentType(MediaType.APPLICATION_JSON)
-                .content(MAPPER.writeValueAsString(body)), expectedStatus);
+    protected JsonNode postJson(String uri, Object body, int expectedStatus) {
+        return parse(client.post().uri(uri).contentType(MediaType.APPLICATION_JSON).body(body)
+                .exchange().expectStatus().isEqualTo(expectedStatus)
+                .expectBody().returnResult().getResponseBody());
     }
 
-    protected JsonNode putJson(String uri, Object body, int expectedStatus) throws Exception {
-        return exchange(put(uri).contentType(MediaType.APPLICATION_JSON)
-                .content(MAPPER.writeValueAsString(body)), expectedStatus);
+    protected JsonNode putJson(String uri, Object body, int expectedStatus) {
+        return parse(client.put().uri(uri).contentType(MediaType.APPLICATION_JSON).body(body)
+                .exchange().expectStatus().isEqualTo(expectedStatus)
+                .expectBody().returnResult().getResponseBody());
     }
 
-    protected JsonNode getJson(String uri, int expectedStatus) throws Exception {
-        return exchange(get(uri), expectedStatus);
+    protected JsonNode getJson(String uri, int expectedStatus) {
+        return parse(client.get().uri(uri)
+                .exchange().expectStatus().isEqualTo(expectedStatus)
+                .expectBody().returnResult().getResponseBody());
     }
 
-    protected JsonNode deleteJson(String uri, int expectedStatus) throws Exception {
-        return exchange(delete(uri), expectedStatus);
+    protected JsonNode deleteJson(String uri, int expectedStatus) {
+        return parse(client.delete().uri(uri)
+                .exchange().expectStatus().isEqualTo(expectedStatus)
+                .expectBody().returnResult().getResponseBody());
     }
 
-    private JsonNode exchange(MockHttpServletRequestBuilder request, int expectedStatus) throws Exception {
-        MvcResult result = mockMvc.perform(request)
-                .andExpect(status().is(expectedStatus))
-                .andReturn();
-        String body = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        return body.isBlank() ? MAPPER.createObjectNode() : MAPPER.readTree(body);
+    /** Multipart upload of a single {@code file} part plus optional string params; returns parsed body. */
+    protected JsonNode uploadMultipart(String uri, byte[] fileBytes, String filename, MediaType fileType,
+                                       Map<String, String> params, int expectedStatus) {
+        return parse(multipart(uri, fileBytes, filename, fileType, params)
+                .expectStatus().isEqualTo(expectedStatus)
+                .expectBody().returnResult().getResponseBody());
+    }
+
+    /**
+     * Raw multipart exchange, for callers that need to assert headers/bytes themselves. The server
+     * detects the real content type from the bytes (Tika), so the part is sent with the filename
+     * only ({@code fileType} is accepted for readability but not transmitted per-part).
+     */
+    protected RestTestClient.ResponseSpec multipart(String uri, byte[] fileBytes, String filename,
+                                                    MediaType fileType, Map<String, String> params) {
+        ByteArrayResource fileResource = new ByteArrayResource(fileBytes) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        };
+        MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
+        parts.add("file", fileResource);
+        if (params != null) {
+            params.forEach(parts::add);
+        }
+        return client.post().uri(uri)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(parts)
+                .exchange();
+    }
+
+    private JsonNode parse(byte[] body) {
+        try {
+            return body == null || body.length == 0 ? MAPPER.createObjectNode() : MAPPER.readTree(body);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to parse JSON response body", e);
+        }
     }
 }

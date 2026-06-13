@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.gucardev.springreactboilerplate.BaseIntegrationTest;
-import java.util.Map;
+import com.gucardev.springreactboilerplate.domain.otp.enums.OtpSendingChannel;
+import com.gucardev.springreactboilerplate.domain.otp.enums.OtpType;
+import com.gucardev.springreactboilerplate.domain.otp.model.request.SendOtpRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
@@ -16,13 +18,14 @@ import org.springframework.test.context.TestPropertySource;
 class OtpResendCooldownIT extends BaseIntegrationTest {
 
     @Test
-    void secondSendWithinCooldown_isRejected() throws Exception {
-        Map<String, String> body = Map.of(
-                "destination", "+905559998877", "type", "ACCOUNT_VERIFICATION", "sendingChannel", "SMS");
+    void secondSendWithinCooldown_isRejected() {
+        SendOtpRequest send = SendOtpRequest.builder()
+                .destination("+905559998877").type(OtpType.ACCOUNT_VERIFICATION)
+                .sendingChannel(OtpSendingChannel.SMS).build();
 
-        postJson("/otp/send", body, 200);
+        postJson("/otp/send", send, 200);
 
-        JsonNode tooSoon = postJson("/otp/send", body, 429);
+        JsonNode tooSoon = postJson("/otp/send", send, 429);
         assertThat(tooSoon.path("businessErrorCode").asText()).isEqualTo("OTP_RESEND_TOO_SOON");
     }
 }

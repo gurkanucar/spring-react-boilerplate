@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.gucardev.springreactboilerplate.BaseIntegrationTest;
+import com.gucardev.springreactboilerplate.domain.otp.enums.OtpSendingChannel;
 import com.gucardev.springreactboilerplate.domain.otp.enums.OtpType;
+import com.gucardev.springreactboilerplate.domain.otp.model.request.SendOtpRequest;
+import com.gucardev.springreactboilerplate.domain.otp.model.request.VerifyOtpRequest;
 import com.gucardev.springreactboilerplate.domain.otp.repository.OtpRepository;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,86 +23,83 @@ class OtpIT extends BaseIntegrationTest {
     private OtpRepository otpRepository;
 
     @Test
-    void send_returnsMetadata_withoutTheCode() throws Exception {
-        JsonNode data = postJson("/otp/send",
-                Map.of("destination", "+905551234567", "type", "ACCOUNT_VERIFICATION", "sendingChannel", "SMS"),
-                200).path("data");
+    void send_returnsMetadata_withoutTheCode() {
+        JsonNode data = postJson("/otp/send", SendOtpRequest.builder()
+                .destination("+905551234567").type(OtpType.ACCOUNT_VERIFICATION)
+                .sendingChannel(OtpSendingChannel.SMS).build(), 200).path("data");
 
         assertThat(data.path("destination").asText()).isEqualTo("+905551234567");
         assertThat(data.path("type").asText()).isEqualTo("ACCOUNT_VERIFICATION");
         assertThat(data.path("sendingChannel").asText()).isEqualTo("SMS");
         assertThat(data.path("expiryTime").asText()).isNotBlank();
-        // The code must never be exposed.
         assertThat(data.has("code")).isFalse();
         assertThat(data.has("otp")).isFalse();
     }
 
     @Test
-    void send_thenVerify_withCorrectCode_succeeds_andBurnsTheCode() throws Exception {
-        postJson("/otp/send",
-                Map.of("destination", "user@mail.com", "type", "ACCOUNT_VERIFICATION", "sendingChannel", "EMAIL"),
-                200);
+    void send_thenVerify_withCorrectCode_succeeds_andBurnsTheCode() {
+        postJson("/otp/send", SendOtpRequest.builder()
+                .destination("user@mail.com").type(OtpType.ACCOUNT_VERIFICATION)
+                .sendingChannel(OtpSendingChannel.EMAIL).build(), 200);
         String code = activeCode("user@mail.com", OtpType.ACCOUNT_VERIFICATION);
 
-        postJson("/otp/verify",
-                Map.of("destination", "user@mail.com", "type", "ACCOUNT_VERIFICATION", "otp", code), 200);
+        postJson("/otp/verify", VerifyOtpRequest.builder()
+                .destination("user@mail.com").type(OtpType.ACCOUNT_VERIFICATION).otp(code).build(), 200);
 
-        // Single use: the same code no longer has an active OTP.
-        JsonNode reused = postJson("/otp/verify",
-                Map.of("destination", "user@mail.com", "type", "ACCOUNT_VERIFICATION", "otp", code), 404);
+        JsonNode reused = postJson("/otp/verify", VerifyOtpRequest.builder()
+                .destination("user@mail.com").type(OtpType.ACCOUNT_VERIFICATION).otp(code).build(), 404);
         assertThat(reused.path("businessErrorCode").asText()).isEqualTo("OTP_NO_ACTIVE");
     }
 
     @Test
-    void verify_withWrongCode_returnsBadRequest() throws Exception {
-        postJson("/otp/send",
-                Map.of("destination", "+905550000000", "type", "LOGIN_2FA", "sendingChannel", "SMS"), 200);
+    void verify_withWrongCode_returnsBadRequest() {
+        postJson("/otp/send", SendOtpRequest.builder()
+                .destination("+905550000000").type(OtpType.LOGIN_2FA)
+                .sendingChannel(OtpSendingChannel.SMS).build(), 200);
 
-        JsonNode body = postJson("/otp/verify",
-                Map.of("destination", "+905550000000", "type", "LOGIN_2FA", "otp", "000000"), 400);
+        JsonNode body = postJson("/otp/verify", VerifyOtpRequest.builder()
+                .destination("+905550000000").type(OtpType.LOGIN_2FA).otp("000000").build(), 400);
         assertThat(body.path("businessErrorCode").asText()).isEqualTo("OTP_INVALID_CODE");
     }
 
     @Test
-    void verify_withNoActiveOtp_returnsNotFound() throws Exception {
-        JsonNode body = postJson("/otp/verify",
-                Map.of("destination", "nobody@mail.com", "type", "PASSWORD_RESET", "otp", "123456"), 404);
+    void verify_withNoActiveOtp_returnsNotFound() {
+        JsonNode body = postJson("/otp/verify", VerifyOtpRequest.builder()
+                .destination("nobody@mail.com").type(OtpType.PASSWORD_RESET).otp("123456").build(), 404);
         assertThat(body.path("businessErrorCode").asText()).isEqualTo("OTP_NO_ACTIVE");
     }
 
     @Test
-    void send_invalidatesPreviousActiveOtp() throws Exception {
-        postJson("/otp/send",
-                Map.of("destination", "dupe@mail.com", "type", "ACCOUNT_VERIFICATION", "sendingChannel", "EMAIL"), 200);
-        postJson("/otp/send",
-                Map.of("destination", "dupe@mail.com", "type", "ACCOUNT_VERIFICATION", "sendingChannel", "EMAIL"), 200);
+    void send_invalidatesPreviousActiveOtp() {
+        SendOtpRequest send = SendOtpRequest.builder()
+                .destination("dupe@mail.com").type(OtpType.ACCOUNT_VERIFICATION)
+                .sendingChannel(OtpSendingChannel.EMAIL).build();
+        postJson("/otp/send", send, 200);
+        postJson("/otp/send", send, 200);
 
-        // Exactly one active OTP remains, and the latest code verifies.
-        long active = otpRepository
-                .findAll().stream()
+        long active = otpRepository.findAll().stream()
                 .filter(o -> o.getDestination().equals("dupe@mail.com") && !o.getUsed())
                 .count();
         assertThat(active).isEqualTo(1);
 
         String latest = activeCode("dupe@mail.com", OtpType.ACCOUNT_VERIFICATION);
-        postJson("/otp/verify",
-                Map.of("destination", "dupe@mail.com", "type", "ACCOUNT_VERIFICATION", "otp", latest), 200);
+        postJson("/otp/verify", VerifyOtpRequest.builder()
+                .destination("dupe@mail.com").type(OtpType.ACCOUNT_VERIFICATION).otp(latest).build(), 200);
     }
 
     @Test
-    void verify_afterMaxWrongAttempts_locksOut() throws Exception {
-        postJson("/otp/send",
-                Map.of("destination", "lock@mail.com", "type", "PASSWORD_RESET", "sendingChannel", "EMAIL"), 200);
+    void verify_afterMaxWrongAttempts_locksOut() {
+        postJson("/otp/send", SendOtpRequest.builder()
+                .destination("lock@mail.com").type(OtpType.PASSWORD_RESET)
+                .sendingChannel(OtpSendingChannel.EMAIL).build(), 200);
 
-        // Default otp.max-attempts = 5 wrong guesses, all rejected as invalid...
         for (int i = 0; i < 5; i++) {
-            postJson("/otp/verify",
-                    Map.of("destination", "lock@mail.com", "type", "PASSWORD_RESET", "otp", "999999"), 400);
+            postJson("/otp/verify", VerifyOtpRequest.builder()
+                    .destination("lock@mail.com").type(OtpType.PASSWORD_RESET).otp("999999").build(), 400);
         }
-        // ...then the OTP is locked even for the correct code.
         String correct = activeCode("lock@mail.com", OtpType.PASSWORD_RESET);
-        JsonNode locked = postJson("/otp/verify",
-                Map.of("destination", "lock@mail.com", "type", "PASSWORD_RESET", "otp", correct), 429);
+        JsonNode locked = postJson("/otp/verify", VerifyOtpRequest.builder()
+                .destination("lock@mail.com").type(OtpType.PASSWORD_RESET).otp(correct).build(), 429);
         assertThat(locked.path("businessErrorCode").asText()).isEqualTo("OTP_MAX_ATTEMPTS");
     }
 
