@@ -76,6 +76,16 @@ management:
     sampling:
       probability: '1.0'
 
+# ==================== OTP CONFIGURATION ====================
+otp:
+  length: 6
+  expiry-minutes: 5
+  max-attempts: 5
+  # Min seconds between two sends to the same (destination, type) — throttles resend abuse. 0 disables.
+  resend-cooldown-seconds: 60
+  # Hourly purge of expired/used OTPs (guarded by ShedLock).
+  cleanup-cron: "0 0 * * * *"
+
 # ==================== SECURITY CONFIGURATION ====================
 security:
   jwt:
@@ -94,6 +104,8 @@ security:
     /auth/login,
     /auth/refresh,
     /auth/logout,
+    /otp/send,
+    /otp/verify,
     /public/**,
     /api/v1/public/**,
     /ws/**,
