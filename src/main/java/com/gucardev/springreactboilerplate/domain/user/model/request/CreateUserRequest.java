@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Payload for an admin creating a user. {@code roles} are role names (no {@code ROLE_} prefix);
@@ -45,6 +46,13 @@ public record CreateUserRequest(
         Boolean isActive,
 
         @Schema(description = "Role names to grant (no ROLE_ prefix)", example = "[\"USER\"]")
-        Set<String> roles
+        Set<String> roles,
+
+        @Schema(description = "Organization to assign the user to; null for a global super-admin",
+                example = "7a2b1c9d-3e4f-5a6b-7c8d-9e0f1a2b3c4d")
+        UUID organizationId,
+
+        @Schema(description = "Workspace to pin the user to (an employee); null for an org-level user")
+        UUID workspaceId
 ) {
 }

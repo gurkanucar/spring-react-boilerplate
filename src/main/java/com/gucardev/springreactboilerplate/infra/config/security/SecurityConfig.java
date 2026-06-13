@@ -1,6 +1,7 @@
 package com.gucardev.springreactboilerplate.infra.config.security;
 
 import com.gucardev.springreactboilerplate.infra.config.security.jwt.JwtAuthenticationFilter;
+import com.gucardev.springreactboilerplate.infra.config.tenant.TenantContextFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final TenantContextFilter tenantContextFilter;
 
     /** Public paths (Swagger, actuator, auth, public APIs, ws...) bound from application.yml. */
     @Value("${security.ignored-paths}")
@@ -61,6 +63,8 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable);
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // After authentication so the principal is available to derive the tenant scope.
+        http.addFilterAfter(tenantContextFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

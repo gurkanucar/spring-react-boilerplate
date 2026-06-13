@@ -12,15 +12,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * Adapts a {@link User} to Spring Security's {@link UserDetails}. Role names are prefixed with
- * {@code ROLE_} so {@code hasRole(...)} checks match. {@code isEnabled()} reflects {@code isActive},
- * which causes the {@code AuthenticationManager} to raise {@code DisabledException} on a disabled
- * account during login.
+ * {@code ROLE_} so {@code hasRole(...)} checks match. {@code isEnabled()} reflects {@code isActive}.
+ * Carries the user's {@code organizationId} so the tenant filter can scope the request.
  */
 @Getter
 @RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
 
     private final UUID id;
+    private final UUID organizationId;
+    private final UUID workspaceId;
     private final String email;
     private final String password;
     private final boolean enabled;
@@ -32,6 +33,8 @@ public class UserPrincipal implements UserDetails {
                 .toList();
         return new UserPrincipal(
                 user.getId(),
+                user.getOrganizationId(),
+                user.getWorkspaceId(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getIsActive(),

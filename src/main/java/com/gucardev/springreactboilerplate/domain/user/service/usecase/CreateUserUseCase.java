@@ -23,6 +23,7 @@ public class CreateUserUseCase {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserRoleResolver roleResolver;
+    private final UserTenantAssignmentValidator tenantAssignmentValidator;
 
     @Transactional
     public UserResponseDto execute(CreateUserRequest request) {
@@ -35,6 +36,7 @@ public class CreateUserUseCase {
         user.setActivated(request.activated() == null || request.activated());
         user.setIsActive(request.isActive() == null || request.isActive());
         user.setRoles(roleResolver.resolve(request.roles()));
+        tenantAssignmentValidator.validate(user.getOrganizationId(), user.getWorkspaceId());
 
         return userMapper.toDto(repository.save(user));
     }

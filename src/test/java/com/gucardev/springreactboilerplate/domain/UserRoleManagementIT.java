@@ -44,7 +44,7 @@ class UserRoleManagementIT extends BaseIntegrationTest {
     @Test
     void user_crud_roundTrip_withRoleAssignment() {
         JsonNode created = postJson("/api/v1/users", new CreateUserRequest(
-                "managed@mail.com", "secret123", "Managed", "User", null, null, null, Set.of("USER")), 201);
+                "managed@mail.com", "secret123", "Managed", "User", null, null, null, Set.of("USER"), null, null), 201);
         String id = created.path("data").path("id").asText();
         assertThat(created.path("data").path("email").asText()).isEqualTo("managed@mail.com");
         assertThat(created.path("data").path("roles").toString()).contains("USER");
@@ -55,7 +55,7 @@ class UserRoleManagementIT extends BaseIntegrationTest {
 
         // Disable + swap roles.
         JsonNode updated = putJson("/api/v1/users/" + id,
-                new UpdateUserRequest(null, null, null, null, false, Set.of("ADMIN", "USER")), 200);
+                new UpdateUserRequest(null, null, null, null, false, Set.of("ADMIN", "USER"), null, null), 200);
         assertThat(updated.path("data").path("isActive").asBoolean()).isFalse();
         assertThat(updated.path("data").path("roles").toString()).contains("ADMIN");
 
@@ -69,14 +69,14 @@ class UserRoleManagementIT extends BaseIntegrationTest {
     @Test
     void createUser_withUnknownRole_returnsBadRequest() {
         JsonNode body = postJson("/api/v1/users", new CreateUserRequest(
-                "badrole@mail.com", "secret123", "Bad", null, null, null, null, Set.of("DOES_NOT_EXIST")), 400);
+                "badrole@mail.com", "secret123", "Bad", null, null, null, null, Set.of("DOES_NOT_EXIST"), null, null), 400);
         assertThat(body.path("businessErrorCode").asText()).isEqualTo("ROLE_NOT_FOUND");
     }
 
     @Test
     void createUser_withDuplicateEmail_returnsConflict() {
         JsonNode body = postJson("/api/v1/users", new CreateUserRequest(
-                "admin@mail.com", "secret123", "Clash", null, null, null, null, null), 409);
+                "admin@mail.com", "secret123", "Clash", null, null, null, null, null, null, null), 409);
         assertThat(body.path("businessErrorCode").asText()).isEqualTo("EMAIL_ALREADY_EXISTS");
     }
 }

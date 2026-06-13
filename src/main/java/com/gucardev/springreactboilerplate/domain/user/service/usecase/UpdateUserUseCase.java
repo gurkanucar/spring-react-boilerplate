@@ -26,6 +26,7 @@ public class UpdateUserUseCase {
     private final UserRepository repository;
     private final UserMapper userMapper;
     private final UserRoleResolver roleResolver;
+    private final UserTenantAssignmentValidator tenantAssignmentValidator;
 
     @CacheEvict(cacheNames = CacheNames.USERS, cacheManager = CacheManagers.CAFFEINE_1M, allEntries = true)
     @Transactional
@@ -42,6 +43,8 @@ public class UpdateUserUseCase {
         if (request.roles() != null) {
             user.setRoles(roleResolver.resolve(request.roles()));
         }
+        // Validate the resulting tenant assignment (org/workspace may have changed independently).
+        tenantAssignmentValidator.validate(user.getOrganizationId(), user.getWorkspaceId());
         return userMapper.toDto(repository.save(user));
     }
 }

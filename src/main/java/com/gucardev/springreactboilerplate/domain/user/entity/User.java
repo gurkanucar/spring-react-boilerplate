@@ -64,6 +64,20 @@ public class User extends BaseEntity {
     @Column(name = "profile_image_id")
     private UUID profileImageId;
 
+    /** Tenant the user belongs to. Null = a global super-admin not scoped to any organization. */
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "organization_id")
+    private UUID organizationId;
+
+    /**
+     * Workspace the user is pinned to (a workspace-level "employee"). Null = an organization-level
+     * user (e.g. a manager) who can act across the org's workspaces via the {@code X-Workspace-Id}
+     * header.
+     */
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "workspace_id")
+    private UUID workspaceId;
+
     private Boolean activated;
 
     @Builder.Default

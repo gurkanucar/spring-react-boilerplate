@@ -3,6 +3,7 @@ package com.gucardev.springreactboilerplate.domain.user.model.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Payload for an admin updating a user. Null fields are left unchanged. Email and password are
@@ -31,6 +32,13 @@ public record UpdateUserRequest(
         Boolean isActive,
 
         @Schema(description = "Replacement role names (no ROLE_ prefix)", example = "[\"ADMIN\",\"USER\"]")
-        Set<String> roles
+        Set<String> roles,
+
+        @Schema(description = "Reassign the user to this organization; null leaves it unchanged",
+                example = "7a2b1c9d-3e4f-5a6b-7c8d-9e0f1a2b3c4d")
+        UUID organizationId,
+
+        @Schema(description = "Pin the user to this workspace; null leaves it unchanged")
+        UUID workspaceId
 ) {
 }

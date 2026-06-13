@@ -37,6 +37,13 @@ public class UserResponseDto extends BaseDto {
             example = "3f1e7c9a-2b6d-4c8e-9f0a-1d2e3f4a5b6c")
     private UUID profileImageId;
 
+    @Schema(description = "Organization the user belongs to; null for a global super-admin",
+            example = "7a2b1c9d-3e4f-5a6b-7c8d-9e0f1a2b3c4d")
+    private UUID organizationId;
+
+    @Schema(description = "Workspace the user is pinned to (an employee); null for org-level users")
+    private UUID workspaceId;
+
     @Schema(description = "Resolved profile image URL (CDN or app endpoint); null if unset")
     private String profileImageUrl;
 

@@ -30,6 +30,8 @@ public class DataSeeder {
 
     static final String ROLE_USER = "USER";
     static final String ROLE_ADMIN = "ADMIN";
+    static final String ROLE_ORG_MANAGER = "ORG_MANAGER";
+    static final String ROLE_WORKSPACE_USER = "WORKSPACE_USER";
 
     private final PlatformTransactionManager transactionManager;
     private final RoleRepository roleRepository;
@@ -49,6 +51,10 @@ public class DataSeeder {
         Map<String, Role> result = new LinkedHashMap<>();
         result.put(ROLE_USER, findOrCreateRole(ROLE_USER, "Regular User", "Standard end-user account"));
         result.put(ROLE_ADMIN, findOrCreateRole(ROLE_ADMIN, "Administrator", "Full system access"));
+        result.put(ROLE_ORG_MANAGER,
+                findOrCreateRole(ROLE_ORG_MANAGER, "Organization Manager", "Manages workspaces within an organization"));
+        result.put(ROLE_WORKSPACE_USER,
+                findOrCreateRole(ROLE_WORKSPACE_USER, "Workspace User", "Workspace-level employee pinned to one workspace"));
         return result;
     }
 
