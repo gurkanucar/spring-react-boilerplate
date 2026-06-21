@@ -27,7 +27,11 @@ public final class FeatureFlags {
     /** Record an audit trail of changes within the workspace. */
     public static final String AUDIT_LOG = "AUDIT_LOG";
 
+    /** In-app notifications (the notification feed). When off, notifications are silently dropped. */
+    public static final String IN_APP_NOTIFICATIONS = "IN_APP_NOTIFICATIONS";
+
     /** Catalog rendered in the admin toggle UI and used by the seeder. Add new flags here. */
-    public static final List<String> KNOWN =
-            List.of(NEWS_MODULE, FILE_ATTACHMENTS, EMAIL_NOTIFICATIONS, ADVANCED_ANALYTICS, AUDIT_LOG);
+    public static final List<String> KNOWN = List.of(
+            NEWS_MODULE, FILE_ATTACHMENTS, EMAIL_NOTIFICATIONS, ADVANCED_ANALYTICS, AUDIT_LOG,
+            IN_APP_NOTIFICATIONS);
 }

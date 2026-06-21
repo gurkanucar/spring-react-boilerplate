@@ -6,10 +6,13 @@ import com.gucardev.springreactboilerplate.features.news.mapper.NewsMapper;
 import com.gucardev.springreactboilerplate.features.news.model.dto.NewsResponseDto;
 import com.gucardev.springreactboilerplate.features.news.model.request.CreateNewsRequest;
 import com.gucardev.springreactboilerplate.features.news.repository.NewsRepository;
+import com.gucardev.springreactboilerplate.features.shared.event.NotificationEvent;
 import com.gucardev.springreactboilerplate.features.shared.util.SlugUtil;
+import com.gucardev.springreactboilerplate.infra.config.security.SecurityUtils;
 import com.gucardev.springreactboilerplate.infra.config.tenant.TenantContextHolder;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,7 @@ public class CreateNewsUseCase {
 
     private final NewsRepository repository;
     private final NewsMapper mapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public NewsResponseDto execute(CreateNewsRequest request) {
@@ -30,7 +34,22 @@ public class CreateNewsUseCase {
         if (!news.isFeaturedImageConsistent()) {
             throw NewsExceptionType.FEATURED_IMAGE_NOT_IN_IMAGES.toException();
         }
-        return mapper.toDto(repository.save(news));
+        News saved = repository.save(news);
+        notifyAuthor(workspaceId, saved);
+        return mapper.toDto(saved);
+    }
+
+    /**
+     * Example of the event-driven notification flow: tell the author their news was created. The
+     * notification module gates this on the workspace's IN_APP_NOTIFICATIONS flag. Skipped when there
+     * is no authenticated user (e.g. system/seed calls).
+     */
+    private void notifyAuthor(UUID workspaceId, News news) {
+        UUID authorId = SecurityUtils.currentUserIdOrNull();
+        if (authorId != null) {
+            eventPublisher.publishEvent(new NotificationEvent(workspaceId, authorId,
+                    "NEWS_CREATED", "News published", news.getTitle()));
+        }
     }
 
     private String generateUniqueSlug(String title, UUID workspaceId) {
