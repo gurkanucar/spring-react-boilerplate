@@ -54,6 +54,19 @@ spring:
       connect-timeout: 5s
       lettuce:
         shutdown-timeout: 200ms
+  # SMTP. When host is blank no JavaMailSender is created and EmailService logs instead of sending,
+  # so the app boots without mail configured. Set MAIL_HOST + app.mail.enabled=true to send for real.
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 # ==================== APPLICATION CONFIG ====================
 app:
@@ -62,6 +75,10 @@ app:
   cors:
     # Comma-separated origins allowed by the SecurityConfig CORS policy (React/Vite dev servers).
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  mail:
+    # Master switch for outbound email. Off by default so non-prod envs never send real mail.
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@example.com}
 
 # ==================== COMMON ACTUATOR CONFIG ====================
 management:
