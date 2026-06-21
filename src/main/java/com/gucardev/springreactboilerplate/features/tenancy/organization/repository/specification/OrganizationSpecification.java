@@ -3,12 +3,12 @@ package com.gucardev.springreactboilerplate.features.tenancy.organization.reposi
 import com.gucardev.springreactboilerplate.features.tenancy.organization.entity.Organization;
 import com.gucardev.springreactboilerplate.features.tenancy.organization.model.request.OrganizationFilterRequest;
 import com.gucardev.springreactboilerplate.features.shared.repository.specification.BaseSpecification;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class OrganizationSpecification {
-
-    private OrganizationSpecification() {
-    }
 
     public static Specification<Organization> build(OrganizationFilterRequest filter) {
         return BaseSpecification.<Organization>like("name", filter.getName())

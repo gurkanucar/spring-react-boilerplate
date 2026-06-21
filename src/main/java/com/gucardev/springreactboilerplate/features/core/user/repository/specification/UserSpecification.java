@@ -3,16 +3,16 @@ package com.gucardev.springreactboilerplate.features.core.user.repository.specif
 import com.gucardev.springreactboilerplate.features.shared.repository.specification.BaseSpecification;
 import com.gucardev.springreactboilerplate.features.core.user.entity.User;
 import com.gucardev.springreactboilerplate.features.core.user.model.request.UserFilterRequest;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Builds the query {@link Specification} for a {@link UserFilterRequest} by composing reusable
  * predicates from {@link BaseSpecification}. Each predicate is a no-op when its input is empty.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class UserSpecification {
-
-    private UserSpecification() {
-    }
 
     public static Specification<User> build(UserFilterRequest filter) {
         return BaseSpecification.<User>like("email", filter.getEmail())

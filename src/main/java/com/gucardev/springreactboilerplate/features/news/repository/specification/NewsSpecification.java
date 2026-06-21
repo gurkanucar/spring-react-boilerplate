@@ -4,13 +4,13 @@ import com.gucardev.springreactboilerplate.features.news.entity.News;
 import com.gucardev.springreactboilerplate.features.news.model.request.NewsFilterRequest;
 import com.gucardev.springreactboilerplate.features.shared.repository.specification.BaseSpecification;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NewsSpecification {
-
-    private NewsSpecification() {
-    }
 
     /**
      * @param workspaceId the tenant scope to constrain to; never {@code null} (news is always
@@ -29,10 +29,8 @@ public final class NewsSpecification {
             if (!StringUtils.hasText(tag)) {
                 return null;
             }
-            if (query != null) {
-                query.distinct(true);
-            }
-            return cb.isMember(tag, root.<java.util.Collection<String>>get("tags"));
+            query.distinct(true);
+            return cb.isMember(tag, root.get("tags"));
         };
     }
 }
