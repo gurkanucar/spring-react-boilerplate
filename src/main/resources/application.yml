@@ -9,9 +9,13 @@ spring:
     active: dev
   jpa:
     open-in-view: false
+    properties:
+      hibernate:
+        # Batch-loads lazy collections/associations via IN (...) instead of one query per row,
+        # which prevents N+1 when mapping a page of entities that touch lazy collections
+        # (e.g. News.imageIds / News.tags element collections, User.roles).
+        default_batch_fetch_size: 100
   #    show-sql: true
-  #    properties:
-  #      hibernate:
   #        format_sql: true
 
   # ==================== JSON (JACKSON 3) ====================
