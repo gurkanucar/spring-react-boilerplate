@@ -8,6 +8,7 @@ import com.gucardev.springreactboilerplate.features.news.model.request.CreateNew
 import com.gucardev.springreactboilerplate.features.news.repository.NewsRepository;
 import com.gucardev.springreactboilerplate.features.shared.event.NotificationEvent;
 import com.gucardev.springreactboilerplate.features.shared.util.SlugUtil;
+import com.gucardev.springreactboilerplate.infra.config.ratelimit.KeyedRateLimiter;
 import com.gucardev.springreactboilerplate.infra.config.security.SecurityUtils;
 import com.gucardev.springreactboilerplate.infra.config.tenant.TenantContextHolder;
 import java.util.UUID;
@@ -20,13 +21,22 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CreateNewsUseCase {
 
+    /** Per-user creation cap (example of programmatic per-key rate limiting). */
+    private static final int MAX_PER_MINUTE = 20;
+
     private final NewsRepository repository;
     private final NewsMapper mapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final KeyedRateLimiter keyedRateLimiter;
 
     @Transactional
     public NewsResponseDto execute(CreateNewsRequest request) {
         UUID workspaceId = TenantContextHolder.requireWorkspaceId();
+        UUID authorId = SecurityUtils.currentUserIdOrNull();
+        if (authorId != null) {
+            // Per-user limit (resilience4j, keyed) — throws RequestNotPermitted -> 429 when exceeded.
+            keyedRateLimiter.acquireForUser("createNews", authorId, MAX_PER_MINUTE, 60);
+        }
         News news = mapper.toEntity(request);
         news.setWorkspaceId(workspaceId);
         news.setFeatured(request.featured() != null && request.featured());
