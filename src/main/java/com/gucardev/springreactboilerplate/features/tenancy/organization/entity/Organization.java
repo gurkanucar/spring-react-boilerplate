@@ -20,6 +20,9 @@ import org.hibernate.type.SqlTypes;
 /**
  * A tenant (the top of the SaaS hierarchy). Workspaces belong to an organization; users are scoped
  * to one via {@code User.organizationId}. The {@code logoId} references a file in the store.
+ *
+ * <p>Organizations are the tenant root and are managed only by global super-admins (see
+ * {@code OrganizationController}, where every endpoint is {@code hasRole('ADMIN')}).
  */
 @Entity
 @Table(name = "organizations",

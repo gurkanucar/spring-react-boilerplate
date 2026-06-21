@@ -22,12 +22,15 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Starter security configuration: a stateless REST setup that returns the standard
- * {@link com.gucardev.springreactboilerplate.infra.exception.model.ApiError} envelope for
+ * Stateless REST security: JWT bearer authentication with no server-side session, returning the
+ * standard {@link com.gucardev.springreactboilerplate.infra.exception.model.ApiError} envelope for
  * 401/403 instead of the default empty-body responses.
  *
- * <p>There is intentionally no authentication mechanism wired yet — every non-permitted
- * request gets a 401 until you add one. Plug your JWT (or other) filter where marked below.
+ * <p>The chain runs {@link JwtAuthenticationFilter} (authenticates the bearer token and populates
+ * the {@code SecurityContext}) followed by {@link TenantContextFilter} (derives the
+ * organization/workspace scope from the authenticated principal). Browser login flows (HTTP basic,
+ * form login, logout) are disabled; public paths are bound from {@code security.ignored-paths} and
+ * method-level authorization is enabled via {@link EnableMethodSecurity}.
  */
 @Configuration
 @EnableWebSecurity
@@ -80,16 +83,18 @@ public class SecurityConfig {
     }
 
     /**
-     * CORS for the React frontend. Origins are configurable via {@code app.cors.allowed-origins}
-     * (comma-separated); defaults cover Create-React-App (3000) and Vite (5173) dev servers.
+     * CORS for the frontend. Driven entirely by {@code app.cors.allowed-origins} (comma-separated)
+     * from the active profile — dev sets {@code *} to allow any origin, prod lists explicit origins.
+     * Values are treated as <em>origin patterns</em> ({@code setAllowedOriginPatterns}), so the
+     * wildcard {@code *} is permitted even with {@code allowCredentials(true)} (a plain
+     * {@code setAllowedOrigins("*")} is not).
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173}")
-            List<String> allowedOrigins) {
+            @Value("${app.cors.allowed-origins}") List<String> allowedOriginPatterns) {
 
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedOriginPatterns(allowedOriginPatterns);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

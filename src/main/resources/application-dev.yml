@@ -14,3 +14,9 @@ spring:
 logging:
   level:
     org.hibernate.tool.schema: INFO #DEBUG
+
+# Dev convenience: allow requests from any origin so local frontends on any port work without
+# CORS tweaks. Never use "*" in prod — application-prod.yml / CORS_ALLOWED_ORIGINS pins origins.
+app:
+  cors:
+    allowed-origins: "*"

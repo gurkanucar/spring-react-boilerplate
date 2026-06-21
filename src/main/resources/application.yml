@@ -73,7 +73,9 @@ app:
   redis:
     key-prefix: ${REDIS_KEY_PREFIX:}
   cors:
-    # Comma-separated origins allowed by the SecurityConfig CORS policy (React/Vite dev servers).
+    # Comma-separated origin patterns allowed by the SecurityConfig CORS policy. Treated as
+    # patterns (setAllowedOriginPatterns), so "*" is allowed even with credentials. The dev
+    # profile overrides this to "*" (allow all); prod should pin explicit origins via env.
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
   mail:
     # Master switch for outbound email. Off by default so non-prod envs never send real mail.
