@@ -3,6 +3,7 @@ package com.gucardev.springreactboilerplate.infra.exception;
 import com.gucardev.springreactboilerplate.infra.config.message.MessageUtil;
 import com.gucardev.springreactboilerplate.infra.exception.model.ApiError;
 import com.gucardev.springreactboilerplate.infra.exception.model.BusinessException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         ex.getStatus().value(),
                         message,
                         ex.getCode(),
+                        getTraceId()));
+    }
+
+    // -------------------------------------------------------------------------
+    // Rate limiting (resilience4j @RateLimiter)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<ApiError> handleRateLimited(HttpServletRequest request) {
+        log.warn("[RATE_LIMIT] path={}", request.getRequestURI());
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, "60")
+                .body(ApiError.business(
+                        HttpStatus.TOO_MANY_REQUESTS.value(),
+                        MessageUtil.getMessage("error.rate_limit_exceeded"),
+                        "RATE_LIMIT_EXCEEDED",
                         getTraceId()));
     }
 

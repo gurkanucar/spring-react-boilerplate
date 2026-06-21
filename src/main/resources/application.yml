@@ -81,8 +81,8 @@ app:
     from: ${MAIL_FROM:no-reply@example.com}
   rate-limit:
     # Per-IP token bucket on sensitive endpoints (login/register/otp). capacity tokens per window.
-    # Kept generous because many users can share one public IP (NAT/corporate networks); per-user
-    # throttling is done separately with @RateLimited.
+    # Kept generous because many users can share one public IP (NAT/corporate networks); method-level
+    # limits are done separately with resilience4j @RateLimiter (see below).
     enabled: ${RATE_LIMIT_ENABLED:true}
     capacity: ${RATE_LIMIT_CAPACITY:100}
     refill-seconds: ${RATE_LIMIT_REFILL_SECONDS:60}
@@ -90,6 +90,16 @@ app:
       - /auth/login
       - /auth/register
       - /otp/send
+
+# Method-level rate limits via resilience4j's built-in @RateLimiter (name-based, global per instance).
+# Add an instance here and annotate the method with @RateLimiter(name = "<instance>").
+resilience4j:
+  ratelimiter:
+    instances:
+      markAllNotificationsRead:
+        limit-for-period: 60          # permits per refresh window
+        limit-refresh-period: 60s
+        timeout-duration: 0s          # reject immediately (429) instead of blocking
 
 # ==================== COMMON ACTUATOR CONFIG ====================
 management:
