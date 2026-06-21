@@ -19,8 +19,9 @@ public class RateLimitProperties {
     /** Master switch. */
     private boolean enabled = true;
 
-    /** Max requests allowed within one refill window, per IP per matched path. */
-    private int capacity = 20;
+    /** Max requests allowed within one refill window, per IP per matched path. Kept generous
+     * because many users may share one public IP (NAT); per-user limits use {@code @RateLimited}. */
+    private int capacity = 100;
 
     /** Window length in seconds after which the bucket refills to {@link #capacity}. */
     private int refillSeconds = 60;

@@ -81,8 +81,10 @@ app:
     from: ${MAIL_FROM:no-reply@example.com}
   rate-limit:
     # Per-IP token bucket on sensitive endpoints (login/register/otp). capacity tokens per window.
+    # Kept generous because many users can share one public IP (NAT/corporate networks); per-user
+    # throttling is done separately with @RateLimited.
     enabled: ${RATE_LIMIT_ENABLED:true}
-    capacity: ${RATE_LIMIT_CAPACITY:20}
+    capacity: ${RATE_LIMIT_CAPACITY:100}
     refill-seconds: ${RATE_LIMIT_REFILL_SECONDS:60}
     paths:
       - /auth/login
