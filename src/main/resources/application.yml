@@ -79,6 +79,15 @@ app:
     # Master switch for outbound email. Off by default so non-prod envs never send real mail.
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:no-reply@example.com}
+  rate-limit:
+    # Per-IP token bucket on sensitive endpoints (login/register/otp). capacity tokens per window.
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    capacity: ${RATE_LIMIT_CAPACITY:20}
+    refill-seconds: ${RATE_LIMIT_REFILL_SECONDS:60}
+    paths:
+      - /auth/login
+      - /auth/register
+      - /otp/send
 
 # ==================== COMMON ACTUATOR CONFIG ====================
 management:
