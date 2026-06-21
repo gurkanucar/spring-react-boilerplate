@@ -14,7 +14,7 @@ Two token types:
 > role/enabled changes take effect immediately — the token claims are informational, never trusted
 > for access decisions.
 
-Auth code lives in `com.gucardev.springreactboilerplate.domain.auth`; the security plumbing in
+Auth code lives in `com.gucardev.springreactboilerplate.features.core.auth`; the security plumbing in
 `infra.config.security`.
 
 ---

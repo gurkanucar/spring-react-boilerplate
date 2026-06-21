@@ -15,7 +15,7 @@ Two things identify an OTP, chosen independently on every request:
 > The code is **never** returned in any response. It goes out only over the chosen channel; the API
 > returns delivery metadata only.
 
-All code lives in `com.gucardev.springreactboilerplate.domain.otp`.
+All code lives in `com.gucardev.springreactboilerplate.features.core.otp`.
 
 ---
 

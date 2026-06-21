@@ -1,6 +1,6 @@
 package com.gucardev.springreactboilerplate.infra.config.security.jwt;
 
-import com.gucardev.springreactboilerplate.domain.user.repository.UserRepository;
+import com.gucardev.springreactboilerplate.features.core.user.repository.UserRepository;
 import com.gucardev.springreactboilerplate.infra.config.cache.CacheManagers;
 import com.gucardev.springreactboilerplate.infra.config.cache.CacheNames;
 import lombok.RequiredArgsConstructor;

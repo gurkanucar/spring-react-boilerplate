@@ -1,0 +1,33 @@
+package com.gucardev.springreactboilerplate.features.example.service.usecase;
+
+import com.gucardev.springreactboilerplate.features.example.entity.Example;
+import com.gucardev.springreactboilerplate.features.example.exception.ExampleExceptionType;
+import com.gucardev.springreactboilerplate.features.example.mapper.ExampleMapper;
+import com.gucardev.springreactboilerplate.features.example.model.dto.ExampleResponseDto;
+import com.gucardev.springreactboilerplate.features.example.repository.ExampleRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Atomic operation: fetch via {@link ExampleFinder}, apply the activation rule, persist —
+ * all in one transaction.
+ */
+@Service
+@RequiredArgsConstructor
+public class ActivateExampleUseCase {
+
+    private final ExampleFinder finder;
+    private final ExampleRepository repository;
+    private final ExampleMapper exampleMapper;
+
+    @Transactional
+    public ExampleResponseDto execute(Long id) {
+        Example example = finder.findById(id);
+        if (Boolean.TRUE.equals(example.getActive())) {
+            throw ExampleExceptionType.ALREADY_ACTIVE.toException();
+        }
+        example.setActive(true);
+        return exampleMapper.toDto(repository.save(example));
+    }
+}

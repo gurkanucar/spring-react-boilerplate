@@ -1,6 +1,6 @@
 package com.gucardev.springreactboilerplate.infra.config.security.jwt;
 
-import com.gucardev.springreactboilerplate.domain.user.entity.User;
+import com.gucardev.springreactboilerplate.features.core.user.entity.User;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;

@@ -3,7 +3,7 @@ package com.gucardev.springreactboilerplate.infra.exception;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gucardev.springreactboilerplate.BaseIntegrationTest;
-import com.gucardev.springreactboilerplate.domain.example.model.request.ExampleFilterRequest;
+import com.gucardev.springreactboilerplate.features.example.model.request.ExampleFilterRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
