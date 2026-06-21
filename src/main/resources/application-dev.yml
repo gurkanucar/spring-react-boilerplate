@@ -1,16 +1,14 @@
 spring:
-  # Boots out-of-the-box on in-memory H2 when no DB env vars are set; point at a real
-  # database by exporting DATABASE_URL / DATABASE_USERNAME / DATABASE_PASSWORD.
+  # Local dev runs on PostgreSQL (start it with `docker compose up -d`). Override the connection
+  # with DATABASE_URL / DATABASE_USERNAME / DATABASE_PASSWORD.
   datasource:
-    url: ${DATABASE_URL:jdbc:h2:mem:devdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}
-    username: ${DATABASE_USERNAME:sa}
-    password: ${DATABASE_PASSWORD:}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/appdb}
+    username: ${DATABASE_USERNAME:app}
+    password: ${DATABASE_PASSWORD:app}
   jpa:
     hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        hbm2ddl.halt_on_error: true
+      # Flyway owns the schema; Hibernate only validates that the entities match it.
+      ddl-auto: validate
     show-sql: false
 
 logging:

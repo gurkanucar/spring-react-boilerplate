@@ -5,9 +5,8 @@ spring:
       hibernate:
         format_sql: false
     hibernate:
-      # WARNING: `update` lets Hibernate mutate the prod schema at startup. Once you adopt a
-      # migration tool (Flyway/Liquibase), switch this to `validate` (or `none`) for safety.
-      ddl-auto: update
+      # Flyway owns the schema; Hibernate only validates the entities match it (never mutates prod).
+      ddl-auto: validate
 
 logbook:
   strategy: status-at-least
