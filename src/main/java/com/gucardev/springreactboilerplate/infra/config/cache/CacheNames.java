@@ -28,4 +28,7 @@ public final class CacheNames {
 
     /** Stored-file metadata by id — avoids a DB hit on every file read/download. */
     public static final String FILE_METADATA = "file_metadata";
+
+    /** Effective per-workspace feature-flag state — read on every feature-gated request. */
+    public static final String FEATURE_FLAGS = "feature_flags";
 }
