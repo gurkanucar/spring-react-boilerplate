@@ -54,6 +54,13 @@ spring:
       connect-timeout: 5s
       lettuce:
         shutdown-timeout: 200ms
+  # RabbitMQ for the scheduled/delayed-events example. Start it with `docker compose up -d rabbitmq`.
+  # Connections are lazy: the app still boots if the broker is down (the listener just retries).
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
   # SMTP. When host is blank no JavaMailSender is created and EmailService logs instead of sending,
   # so the app boots without mail configured. Set MAIL_HOST + app.mail.enabled=true to send for real.
   mail:
