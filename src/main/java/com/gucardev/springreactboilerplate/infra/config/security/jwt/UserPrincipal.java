@@ -1,6 +1,6 @@
 package com.gucardev.springreactboilerplate.infra.config.security.jwt;
 
-import com.gucardev.springreactboilerplate.features.core.user.entity.User;
+import com.gucardev.springreactboilerplate.features.core.user.domain.model.User;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -11,7 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Adapts a {@link User} to Spring Security's {@link UserDetails}. Role names are prefixed with
+ * Adapts a domain {@link User} to Spring Security's {@link UserDetails}. Role names are prefixed with
  * {@code ROLE_} so {@code hasRole(...)} checks match. {@code isEnabled()} reflects {@code isActive}.
  * Carries the user's {@code organizationId} so the tenant filter can scope the request.
  */

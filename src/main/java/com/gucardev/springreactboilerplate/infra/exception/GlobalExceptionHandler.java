@@ -2,6 +2,7 @@ package com.gucardev.springreactboilerplate.infra.exception;
 
 import com.gucardev.springreactboilerplate.infra.config.message.MessageUtil;
 import com.gucardev.springreactboilerplate.infra.exception.model.ApiError;
+import com.gucardev.springreactboilerplate.features.shared.domain.DomainException;
 import com.gucardev.springreactboilerplate.infra.exception.model.BusinessException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.persistence.EntityNotFoundException;
@@ -58,6 +59,32 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(ApiError.business(
                         ex.getStatus().value(),
                         message,
+                        ex.getCode(),
+                        getTraceId()));
+    }
+
+    // -------------------------------------------------------------------------
+    // Domain rule violations (raised from inside aggregates / value objects)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ApiError> handleDomain(
+            DomainException ex, HttpServletRequest request) {
+
+        HttpStatus status = switch (ex.getCategory()) {
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case VALIDATION -> HttpStatus.UNPROCESSABLE_ENTITY;
+        };
+
+        log.warn("[DOMAIN] code={} category={} path={}",
+                ex.getCode(), ex.getCategory(), request.getRequestURI());
+
+        return ResponseEntity
+                .status(status)
+                .body(ApiError.business(
+                        status.value(),
+                        ex.getMessage(),
                         ex.getCode(),
                         getTraceId()));
     }

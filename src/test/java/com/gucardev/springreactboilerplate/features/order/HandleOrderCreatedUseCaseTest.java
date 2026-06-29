@@ -2,21 +2,20 @@ package com.gucardev.springreactboilerplate.features.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.gucardev.springreactboilerplate.features.order.entity.Order;
-import com.gucardev.springreactboilerplate.features.order.entity.OrderStatus;
-import com.gucardev.springreactboilerplate.features.order.event.OrderEvents;
-import com.gucardev.springreactboilerplate.features.order.repository.OrderRepository;
-import com.gucardev.springreactboilerplate.features.order.service.usecase.HandleOrderCreatedUseCase;
-import com.gucardev.springreactboilerplate.features.outbox.entity.ProcessedMessage;
-import com.gucardev.springreactboilerplate.features.outbox.model.message.OutboxEventEnvelope;
-import com.gucardev.springreactboilerplate.features.outbox.repository.ProcessedMessageRepository;
+import com.gucardev.springreactboilerplate.features.order.application.port.in.OrderCreatedEvent;
+import com.gucardev.springreactboilerplate.features.order.application.port.out.LoadOrderPort;
+import com.gucardev.springreactboilerplate.features.order.application.port.out.ProcessedEventPort;
+import com.gucardev.springreactboilerplate.features.order.application.port.out.SaveOrderPort;
+import com.gucardev.springreactboilerplate.features.order.application.service.HandleOrderCreatedService;
+import com.gucardev.springreactboilerplate.features.order.domain.event.OrderEvents;
+import com.gucardev.springreactboilerplate.features.order.domain.model.Order;
+import com.gucardev.springreactboilerplate.features.order.domain.model.OrderStatus;
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -26,26 +25,27 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * The consumer handler's idempotency contract: a first delivery confirms the order and records the
- * event id; a redelivery of the same event id is skipped without touching the order again.
+ * The consumer handler's idempotency contract, exercised through the application service and its
+ * output ports: a first delivery confirms the order and records the event id; a redelivery of the
+ * same event id is skipped without touching the order again.
  */
 @ExtendWith(MockitoExtension.class)
 class HandleOrderCreatedUseCaseTest {
 
     @Mock
-    private OrderRepository orderRepository;
+    private LoadOrderPort loadOrderPort;
 
     @Mock
-    private ProcessedMessageRepository processedMessageRepository;
+    private SaveOrderPort saveOrderPort;
+
+    @Mock
+    private ProcessedEventPort processedEventPort;
 
     @InjectMocks
-    private HandleOrderCreatedUseCase useCase;
+    private HandleOrderCreatedService service;
 
-    private OutboxEventEnvelope envelopeFor(UUID eventId, UUID orderId) {
-        return new OutboxEventEnvelope(
-                eventId.toString(), OrderEvents.AGGREGATE_TYPE, orderId.toString(), OrderEvents.ORDER_CREATED,
-                Map.of(OrderEvents.KEY_ORDER_ID, orderId.toString(), OrderEvents.KEY_CUSTOMER_NAME, "Ada"),
-                Instant.now());
+    private OrderCreatedEvent eventFor(UUID eventId, UUID orderId) {
+        return new OrderCreatedEvent(eventId, orderId, "Ada");
     }
 
     private Order placedOrder(UUID orderId) {
@@ -60,26 +60,26 @@ class HandleOrderCreatedUseCaseTest {
         UUID eventId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
         Order order = placedOrder(orderId);
-        when(processedMessageRepository.existsById(eventId)).thenReturn(false);
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(processedEventPort.isProcessed(eventId)).thenReturn(false);
+        when(loadOrderPort.findById(orderId)).thenReturn(Optional.of(order));
 
-        useCase.execute(envelopeFor(eventId, orderId));
+        service.handle(eventFor(eventId, orderId));
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-        verify(orderRepository).save(order);
-        verify(processedMessageRepository).save(any(ProcessedMessage.class));
+        verify(saveOrderPort).save(order);
+        verify(processedEventPort).markProcessed(eventId, OrderEvents.ORDER_CREATED_CONSUMER);
     }
 
     @Test
     void redelivery_isSkipped() {
         UUID eventId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
-        when(processedMessageRepository.existsById(eventId)).thenReturn(true);
+        when(processedEventPort.isProcessed(eventId)).thenReturn(true);
 
-        useCase.execute(envelopeFor(eventId, orderId));
+        service.handle(eventFor(eventId, orderId));
 
-        verify(orderRepository, never()).findById(any());
-        verify(orderRepository, never()).save(any());
-        verify(processedMessageRepository, never()).save(any());
+        verify(loadOrderPort, never()).findById(any());
+        verify(saveOrderPort, never()).save(any());
+        verify(processedEventPort, never()).markProcessed(any(), eq(OrderEvents.ORDER_CREATED_CONSUMER));
     }
 }

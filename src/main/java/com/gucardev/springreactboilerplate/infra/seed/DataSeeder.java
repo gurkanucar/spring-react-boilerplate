@@ -1,24 +1,22 @@
 package com.gucardev.springreactboilerplate.infra.seed;
 
-import com.gucardev.springreactboilerplate.features.core.role.entity.Role;
-import com.gucardev.springreactboilerplate.features.core.role.repository.RoleRepository;
-import com.gucardev.springreactboilerplate.features.core.user.entity.User;
-import com.gucardev.springreactboilerplate.features.core.user.repository.UserRepository;
+import com.gucardev.springreactboilerplate.features.core.role.adapter.out.persistence.RoleJpaEntity;
+import com.gucardev.springreactboilerplate.features.core.role.adapter.out.persistence.RoleJpaRepository;
+import com.gucardev.springreactboilerplate.features.core.user.application.port.in.CreateUserCommand;
+import com.gucardev.springreactboilerplate.features.core.user.application.port.in.CreateUserUseCase;
+import com.gucardev.springreactboilerplate.features.core.user.application.port.in.LoadUserByEmailUseCase;
 import jakarta.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Ensures baseline roles exist on every startup and seeds a default admin so the API can be
- * exercised right away. Idempotent.
+ * exercised right away. Idempotent. Roles are seeded directly via the role repository; the admin is
+ * created through the user create use case (so it shares the same hashing/role-resolution logic).
  */
 @Slf4j
 @Service
@@ -34,57 +32,54 @@ public class DataSeeder {
     static final String ROLE_WORKSPACE_USER = "WORKSPACE_USER";
 
     private final PlatformTransactionManager transactionManager;
-    private final RoleRepository roleRepository;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final RoleJpaRepository roleRepository;
+    private final CreateUserUseCase createUserUseCase;
+    private final LoadUserByEmailUseCase loadUserByEmailUseCase;
 
     @PostConstruct
     public void seed() {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(status -> {
-            Map<String, Role> roles = seedRoles();
-            seedDefaultAdmin(roles.get(ROLE_ADMIN));
+            seedRoles();
+            seedDefaultAdmin();
         });
     }
 
-    private Map<String, Role> seedRoles() {
-        Map<String, Role> result = new LinkedHashMap<>();
-        result.put(ROLE_USER, findOrCreateRole(ROLE_USER, "Regular User", "Standard end-user account"));
-        result.put(ROLE_ADMIN, findOrCreateRole(ROLE_ADMIN, "Administrator", "Full system access"));
-        result.put(ROLE_ORG_MANAGER,
-                findOrCreateRole(ROLE_ORG_MANAGER, "Organization Manager", "Manages workspaces within an organization"));
-        result.put(ROLE_WORKSPACE_USER,
-                findOrCreateRole(ROLE_WORKSPACE_USER, "Workspace User", "Workspace-level employee pinned to one workspace"));
-        return result;
+    private void seedRoles() {
+        findOrCreateRole(ROLE_USER, "Regular User", "Standard end-user account");
+        findOrCreateRole(ROLE_ADMIN, "Administrator", "Full system access");
+        findOrCreateRole(ROLE_ORG_MANAGER, "Organization Manager", "Manages workspaces within an organization");
+        findOrCreateRole(ROLE_WORKSPACE_USER, "Workspace User", "Workspace-level employee pinned to one workspace");
     }
 
-    private Role findOrCreateRole(String name, String displayName, String description) {
-        return roleRepository.findByName(name).orElseGet(() -> {
-            Role role = Role.builder()
+    private void findOrCreateRole(String name, String displayName, String description) {
+        roleRepository.findByName(name).orElseGet(() -> {
+            RoleJpaEntity role = RoleJpaEntity.builder()
                     .name(name)
                     .displayName(displayName)
                     .description(description)
                     .build();
-            Role saved = roleRepository.save(role);
+            RoleJpaEntity saved = roleRepository.save(role);
             log.info("Seeded role: {}", name);
             return saved;
         });
     }
 
-    private void seedDefaultAdmin(Role adminRole) {
-        if (userRepository.existsByEmail(DEFAULT_ADMIN_EMAIL)) {
+    private void seedDefaultAdmin() {
+        if (loadUserByEmailUseCase.loadByEmail(DEFAULT_ADMIN_EMAIL).isPresent()) {
             return;
         }
-        User admin = User.builder()
-                .email(DEFAULT_ADMIN_EMAIL)
-                .password(passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD))
-                .name("Admin")
-                .surname("Admin")
-                .activated(true)
-                .isActive(true)
-                .roles(new HashSet<>(Set.of(adminRole)))
-                .build();
-        userRepository.save(admin);
+        createUserUseCase.create(new CreateUserCommand(
+                DEFAULT_ADMIN_EMAIL,
+                DEFAULT_ADMIN_PASSWORD,
+                "Admin",
+                "Admin",
+                null,
+                true,
+                true,
+                Set.of(ROLE_ADMIN),
+                null,
+                null));
         log.info("Seeded default admin: {}", DEFAULT_ADMIN_EMAIL);
     }
 }
