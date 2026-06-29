@@ -61,6 +61,15 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+
+# ==================== TRANSACTIONAL OUTBOX ====================
+# The relay polls outbox_messages and publishes PENDING rows to RabbitMQ. Only one instance runs the
+# relay at a time (ShedLock). See features/outbox and docs/outbox-pattern-usage.md.
+outbox:
+  poll-delay-ms: ${OUTBOX_POLL_DELAY_MS:2000}   # delay between relay polls
+  batch-size: ${OUTBOX_BATCH_SIZE:50}           # max rows claimed per poll
+  max-attempts: ${OUTBOX_MAX_ATTEMPTS:5}        # publish attempts before a row is marked FAILED
+  backoff-seconds: ${OUTBOX_BACKOFF_SECONDS:30} # base backoff after a failed publish (× attempt count)
   # SMTP. When host is blank no JavaMailSender is created and EmailService logs instead of sending,
   # so the app boots without mail configured. Set MAIL_HOST + app.mail.enabled=true to send for real.
   mail:
