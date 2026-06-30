@@ -24,15 +24,18 @@ public record CreateNewsRequest(
         Boolean featured,
 
         @Schema(description = "Ordered file ids of attached images")
+        @Size(max = 100)
         List<UUID> imageIds,
 
         @Schema(description = "File id of the featured image; must be one of imageIds")
         UUID featuredImageId,
 
         @Schema(description = "Ordered file ids of attached documents (any file type)")
+        @Size(max = 100)
         List<UUID> attachmentIds,
 
         @Schema(description = "Tags", example = "[\"campaign\",\"menu\"]")
+        @Size(max = 50)
         Set<@Size(max = 50) String> tags
 ) {
 }

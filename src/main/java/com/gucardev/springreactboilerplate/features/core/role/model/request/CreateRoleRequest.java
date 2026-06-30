@@ -2,14 +2,16 @@ package com.gucardev.springreactboilerplate.features.core.role.model.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Payload for creating a role.")
 public record CreateRoleRequest(
 
-        @Schema(description = "Role name (no ROLE_ prefix)", example = "MANAGER")
+        @Schema(description = "Role name, uppercase identifier with no ROLE_ prefix", example = "MANAGER")
         @NotBlank
         @Size(max = 50)
+        @Pattern(regexp = "^[A-Z][A-Z0-9_]*$", message = "{role.name.pattern.exception}")
         String name,
 
         @Schema(description = "Human-readable label", example = "Manager")

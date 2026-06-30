@@ -58,7 +58,6 @@ A correct code is **single-use** (burned on success). Failures throw the errors 
 otp:
   length: 6                  # number of digits in a generated code
   expiry-minutes: 5          # how long a code stays valid
-  max-attempts: 5            # wrong guesses before the OTP locks
   resend-cooldown-seconds: 60 # min seconds between two sends to the same (destination, type); 0 disables
   cleanup-cron: "0 0 * * * *" # hourly purge of expired/used OTPs (ShedLock-guarded)
 ```
@@ -74,13 +73,42 @@ the block is optional.
 |---|---|---|
 | Resend spam / SMS-cost abuse | Cooldown between sends per `(destination, type)` | `OTP_RESEND_TOO_SOON`, 429 |
 | Multiple live codes | A new send invalidates the previous active OTP | — |
-| Brute-forcing the code | Lockout after `max-attempts` wrong guesses | `OTP_MAX_ATTEMPTS`, 429 |
+| Brute-forcing the code | Per-IP rate limit on `/otp/verify` (no per-OTP attempt counter) | `TOO_MANY_REQUESTS`, 429 |
 | Stale codes | Expiry window (`expiry-minutes`) | `OTP_EXPIRED`, 410 |
 | No active code / wrong code | — | `OTP_NO_ACTIVE` 404 · `OTP_INVALID_CODE` 400 |
 | Table growth | `OtpCleanupJob` purges expired/used rows (one instance at a time via ShedLock) | — |
 
 > The cooldown is **per destination**. It does not stop an attacker rotating destinations — add a
 > per-IP / per-day cap at the edge if you need that.
+
+---
+
+## Storage variants: DB (`/otp`) vs Redis (`/otp/v2`)
+
+There are two interchangeable implementations of the same primitive — same code generator, same
+senders, same `otp.*` config, same error catalog. They differ only in **where the code is stored**:
+
+| | DB (`/otp`) | Redis (`/otp/v2`) |
+|---|---|---|
+| Storage | `otps` table (one row per OTP) | one Redis hash per OTP, key = `otpv2:{type}:{channel}:{destination}` |
+| Expiry | `expiry_time` column, checked on verify | the **key TTL** — an expired key is simply gone, so there is nothing to read |
+| "At most one active" | scoped by `(destination, type)` | scoped by `(type, channel, destination)` — the key overwrites the previous one |
+| Invalidation on send | bulk `UPDATE … used = true` | overwriting the key replaces the old code |
+| Cleanup | `OtpCleanupJob` purges expired/used rows (ShedLock) | none needed — TTL evicts the key automatically |
+| `used` flag | yes (column) | not needed — a correct code just **deletes** the key |
+| Multi-instance | works (shared DB) | works (shared Redis), no DB round-trips |
+
+Pick Redis when you want self-expiring, low-overhead OTPs with no table growth and no cleanup job;
+pick the DB variant when you want the OTP history/auditing of a real row. Neither tracks a per-OTP
+attempt counter — brute-force is throttled by the per-IP rate limit on the send/verify endpoints.
+
+> The Redis key includes the **channel**, so `/otp/v2/verify` also takes `sendingChannel` (it must
+> match what the code was sent over). The DB `/otp/verify` does not.
+
+Redis code lives in `com.gucardev.springreactboilerplate.features.core.otpv2redis`
+(`RedisOtpStore`, `SendOtpRedisUseCase`, `VerifyOtpRedisUseCase`, `OtpRedisController`). It uses the
+auto-configured `StringRedisTemplate`; keys are prefixed with `app.redis.key-prefix` like the rest of
+the app. The app boots even if Redis is down (Lettuce connects lazily).
 
 ---
 
@@ -129,7 +157,7 @@ public class ResetPasswordUseCase {
 
     @Transactional
     public void execute(ResetPasswordRequest req) {
-        // throws OTP_INVALID_CODE / OTP_EXPIRED / OTP_MAX_ATTEMPTS if not valid
+        // throws OTP_INVALID_CODE / OTP_EXPIRED / OTP_NO_ACTIVE if not valid
         verifyOtpUseCase.execute(new VerifyOtpRequest(req.destination(), OtpType.PASSWORD_RESET, req.otp()));
 
         User user = userRepository.findByEmail(req.destination())
@@ -158,7 +186,10 @@ login (`LOGIN_2FA` → issue tokens after the code checks out).
 | `domain/otp/service/OtpCodeGenerator` | Numeric code generation (`SecureRandom`) |
 | `domain/otp/service/sender/OtpSender` (+ `Sms`/`Email` impls, `OtpSenderDispatcher`) | Pluggable delivery |
 | `domain/otp/service/usecase/SendOtpUseCase` | Cooldown check → invalidate → generate → persist → dispatch |
-| `domain/otp/service/usecase/VerifyOtpUseCase` | Validate, count attempts, burn on success |
+| `domain/otp/service/usecase/VerifyOtpUseCase` | Validate and burn on success |
 | `domain/otp/controller/OtpController` | `POST /otp/send`, `POST /otp/verify` |
 | `domain/otp/scheduler/OtpCleanupJob` | Scheduled purge of expired/used OTPs (`@SchedulerLock`) |
 | `domain/otp/exception/OtpExceptionType` | Error catalog (messages in `messages*.properties`) |
+| `core/otpv2redis/store/RedisOtpStore` | Redis-backed storage (hash + TTL, cooldown marker) |
+| `core/otpv2redis/service/SendOtpRedisUseCase` / `VerifyOtpRedisUseCase` | Redis send/verify (reuse generator, dispatcher, `OtpProperties`) |
+| `core/otpv2redis/controller/OtpRedisController` | `POST /otp/v2/send`, `POST /otp/v2/verify` |

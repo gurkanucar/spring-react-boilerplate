@@ -21,9 +21,6 @@ public final class OtpExceptionType {
     public static final ExceptionType INVALID_CODE =
             new ExceptionType("error.otp.invalid_code", HttpStatus.BAD_REQUEST, "OTP_INVALID_CODE");
 
-    public static final ExceptionType MAX_ATTEMPTS_EXCEEDED =
-            new ExceptionType("error.otp.max_attempts", HttpStatus.TOO_MANY_REQUESTS, "OTP_MAX_ATTEMPTS");
-
     public static final ExceptionType RESEND_TOO_SOON =
             new ExceptionType("error.otp.resend_too_soon", HttpStatus.TOO_MANY_REQUESTS, "OTP_RESEND_TOO_SOON");
 

@@ -1,6 +1,5 @@
 package com.gucardev.springreactboilerplate.features.core.otp.service.usecase;
 
-import com.gucardev.springreactboilerplate.features.core.otp.config.OtpProperties;
 import com.gucardev.springreactboilerplate.features.core.otp.entity.Otp;
 import com.gucardev.springreactboilerplate.features.core.otp.exception.OtpExceptionType;
 import com.gucardev.springreactboilerplate.features.core.otp.model.request.VerifyOtpRequest;
@@ -11,15 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Verifies a submitted code against the active OTP for {@code (destination, type)}. A correct code
- * burns the OTP (single use). A wrong code increments the attempt counter and burns the OTP once
- * the max-attempts threshold is reached, forcing the caller to request a new one.
+ * burns the OTP (single use); a wrong code is rejected without burning it, so the caller can retry
+ * until the OTP expires or is replaced. Brute-force abuse is throttled by the per-IP rate limit on
+ * the endpoint rather than a per-OTP attempt counter.
  */
 @Service
 @RequiredArgsConstructor
 public class VerifyOtpUseCase {
 
     private final OtpRepository otpRepository;
-    private final OtpProperties otpProperties;
 
     @Transactional
     public void execute(VerifyOtpRequest request) {
@@ -34,15 +33,7 @@ public class VerifyOtpUseCase {
             throw OtpExceptionType.EXPIRED.toException();
         }
 
-        // Locked out: the code stays active (so a new send can invalidate it) but no longer accepts
-        // guesses until it expires / is replaced.
-        if (otp.getAttempts() >= otpProperties.getMaxAttempts()) {
-            throw OtpExceptionType.MAX_ATTEMPTS_EXCEEDED.toException();
-        }
-
         if (!otp.getCode().equals(request.getOtp())) {
-            otp.setAttempts(otp.getAttempts() + 1);
-            otpRepository.save(otp);
             throw OtpExceptionType.INVALID_CODE.toException();
         }
 

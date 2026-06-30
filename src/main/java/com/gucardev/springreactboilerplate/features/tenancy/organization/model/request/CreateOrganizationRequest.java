@@ -26,6 +26,7 @@ public record CreateOrganizationRequest(
 
         @Schema(description = "Phone number", example = "+1-555-0100")
         @Size(max = 50)
+        @Pattern(regexp = "^\\+?[0-9 ()\\-]{5,}$", message = "{phone.pattern.exception}")
         String phoneNumber,
 
         @Schema(description = "Address")

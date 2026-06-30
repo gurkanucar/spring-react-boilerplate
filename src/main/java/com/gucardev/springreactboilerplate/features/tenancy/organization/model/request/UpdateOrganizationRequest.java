@@ -23,6 +23,7 @@ public record UpdateOrganizationRequest(
 
         @Schema(description = "Phone number")
         @Size(max = 50)
+        @Pattern(regexp = "^\\+?[0-9 ()\\-]{5,}$", message = "{phone.pattern.exception}")
         String phoneNumber,
 
         @Schema(description = "Address")

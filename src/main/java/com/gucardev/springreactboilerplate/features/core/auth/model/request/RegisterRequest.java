@@ -3,6 +3,7 @@ package com.gucardev.springreactboilerplate.features.core.auth.model.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Self-registration payload.")
@@ -30,6 +31,7 @@ public record RegisterRequest(
 
         @Schema(description = "Phone number", example = "+1-555-0100")
         @Size(max = 30)
+        @Pattern(regexp = "^\\+?[0-9 ()\\-]{5,}$", message = "{phone.pattern.exception}")
         String phoneNumber
 ) {
 }

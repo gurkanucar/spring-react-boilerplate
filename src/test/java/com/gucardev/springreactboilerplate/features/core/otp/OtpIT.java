@@ -88,19 +88,22 @@ class OtpIT extends BaseIntegrationTest {
     }
 
     @Test
-    void verify_afterMaxWrongAttempts_locksOut() {
+    void verify_wrongCode_doesNotLockOut_correctCodeStillWorks() {
         postJson("/otp/send", SendOtpRequest.builder()
-                .destination("lock@mail.com").type(OtpType.PASSWORD_RESET)
+                .destination("retry@mail.com").type(OtpType.PASSWORD_RESET)
                 .sendingChannel(OtpSendingChannel.EMAIL).build(), 200);
 
+        // Wrong guesses are simply rejected — there is no per-OTP attempt lockout anymore.
         for (int i = 0; i < 5; i++) {
-            postJson("/otp/verify", VerifyOtpRequest.builder()
-                    .destination("lock@mail.com").type(OtpType.PASSWORD_RESET).otp("999999").build(), 400);
+            JsonNode wrong = postJson("/otp/verify", VerifyOtpRequest.builder()
+                    .destination("retry@mail.com").type(OtpType.PASSWORD_RESET).otp("999999").build(), 400);
+            assertThat(wrong.path("businessErrorCode").asText()).isEqualTo("OTP_INVALID_CODE");
         }
-        String correct = activeCode("lock@mail.com", OtpType.PASSWORD_RESET);
-        JsonNode locked = postJson("/otp/verify", VerifyOtpRequest.builder()
-                .destination("lock@mail.com").type(OtpType.PASSWORD_RESET).otp(correct).build(), 429);
-        assertThat(locked.path("businessErrorCode").asText()).isEqualTo("OTP_MAX_ATTEMPTS");
+
+        // The OTP is still active, so the correct code verifies successfully.
+        String correct = activeCode("retry@mail.com", OtpType.PASSWORD_RESET);
+        postJson("/otp/verify", VerifyOtpRequest.builder()
+                .destination("retry@mail.com").type(OtpType.PASSWORD_RESET).otp(correct).build(), 200);
     }
 
     private String activeCode(String destination, OtpType type) {

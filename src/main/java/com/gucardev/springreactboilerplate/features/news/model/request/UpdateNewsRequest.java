@@ -22,15 +22,18 @@ public record UpdateNewsRequest(
         Boolean featured,
 
         @Schema(description = "Ordered file ids of attached images (replaces the existing list when provided)")
+        @Size(max = 100)
         List<UUID> imageIds,
 
         @Schema(description = "File id of the featured image; must be one of imageIds")
         UUID featuredImageId,
 
         @Schema(description = "Ordered file ids of attached documents (replaces the existing list when provided)")
+        @Size(max = 100)
         List<UUID> attachmentIds,
 
         @Schema(description = "Tags (replaces the existing set when provided)", example = "[\"campaign\"]")
+        @Size(max = 50)
         Set<@Size(max = 50) String> tags
 ) {
 }

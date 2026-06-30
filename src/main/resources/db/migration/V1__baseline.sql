@@ -114,7 +114,6 @@ CREATE TABLE public.organizations (
 );
 
 CREATE TABLE public.otps (
-    attempts integer NOT NULL,
     used boolean NOT NULL,
     code character varying(8) NOT NULL,
     created_at timestamp(6) without time zone,

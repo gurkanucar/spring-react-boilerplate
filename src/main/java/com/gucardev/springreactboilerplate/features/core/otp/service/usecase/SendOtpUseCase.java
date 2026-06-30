@@ -41,7 +41,6 @@ public class SendOtpUseCase {
                 .code(code)
                 .expiryTime(LocalDateTime.now().plusMinutes(otpProperties.getExpiryMinutes()))
                 .used(false)
-                .attempts(0)
                 .build();
         otpRepository.save(otp);
 

@@ -26,6 +26,7 @@ public record CreateWorkspaceRequest(
 
         @Schema(description = "Phone number")
         @Size(max = 50)
+        @Pattern(regexp = "^\\+?[0-9 ()\\-]{5,}$", message = "{phone.pattern.exception}")
         String phoneNumber,
 
         @Schema(description = "Address")
@@ -34,6 +35,7 @@ public record CreateWorkspaceRequest(
 
         @Schema(description = "Brand accent color (hex)", example = "#b8732b")
         @Size(max = 20)
+        @Pattern(regexp = "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$", message = "{color.pattern.exception}")
         String brandColor,
 
         @Schema(description = "Whether the workspace is active (defaults to true)", example = "true")

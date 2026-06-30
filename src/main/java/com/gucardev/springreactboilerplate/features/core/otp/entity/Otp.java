@@ -62,10 +62,6 @@ public class Otp extends BaseEntity {
     @Column(nullable = false)
     private Boolean used = false;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private Integer attempts = 0;
-
     public boolean isExpired() {
         return expiryTime.isBefore(LocalDateTime.now());
     }

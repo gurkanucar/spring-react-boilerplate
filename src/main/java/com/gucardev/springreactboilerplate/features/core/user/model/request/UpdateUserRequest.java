@@ -1,6 +1,7 @@
 package com.gucardev.springreactboilerplate.features.core.user.model.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public record UpdateUserRequest(
 
         @Schema(description = "Phone number", example = "+1-555-0100")
         @Size(max = 30)
+        @Pattern(regexp = "^\\+?[0-9 ()\\-]{5,}$", message = "{phone.pattern.exception}")
         String phoneNumber,
 
         @Schema(description = "Whether the email is verified", example = "true")
@@ -32,7 +34,8 @@ public record UpdateUserRequest(
         Boolean isActive,
 
         @Schema(description = "Replacement role names (no ROLE_ prefix)", example = "[\"ADMIN\",\"USER\"]")
-        Set<String> roles,
+        @Size(max = 50)
+        Set<@Size(max = 50) String> roles,
 
         @Schema(description = "Reassign the user to this organization; null leaves it unchanged",
                 example = "7a2b1c9d-3e4f-5a6b-7c8d-9e0f1a2b3c4d")
